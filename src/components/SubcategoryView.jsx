@@ -9,7 +9,26 @@ function SubcategoryDeepDive({ subcategory, category, onClose }) {
   const [selectedFile, setSelectedFile] = useState(null);
   const [mitigationModal, setMitigationModal] = useState(null);
   const [explorerSite, setExplorerSite] = useState(null);
+  const [showStateActions, setShowStateActions] = useState(false);
+  const [showActivityActions, setShowActivityActions] = useState(false);
+  const [siteSortCol, setSiteSortCol] = useState('catDocs');
+  const [siteSortDir, setSiteSortDir] = useState('desc');
   const sites = useMemo(() => getCategorySiteBreakdown(subcategory.id, subcategory.documentCount, subcategory.siteCount), [subcategory]);
+  const sortedSites = useMemo(() => {
+    const sorted = [...sites];
+    sorted.sort((a, b) => {
+      let va = a[siteSortCol], vb = b[siteSortCol];
+      if (typeof va === 'string') { va = va.toLowerCase(); vb = (vb || '').toLowerCase(); }
+      if (va < vb) return siteSortDir === 'asc' ? -1 : 1;
+      if (va > vb) return siteSortDir === 'asc' ? 1 : -1;
+      return 0;
+    });
+    return sorted;
+  }, [sites, siteSortCol, siteSortDir]);
+  const handleSiteSort = useCallback((col) => {
+    setSiteSortCol(prev => { if (prev === col) { setSiteSortDir(d => d === 'asc' ? 'desc' : 'asc'); return col; } setSiteSortDir('desc'); return col; });
+  }, []);
+  const siteSort = (col) => siteSortCol !== col ? '' : (siteSortDir === 'asc' ? ' ▲' : ' ▼');
 
   return createPortal(
     <>
@@ -36,16 +55,18 @@ function SubcategoryDeepDive({ subcategory, category, onClose }) {
               <table className="dd-table">
                 <thead>
                   <tr>
-                    <th>Site Name</th>
-                    <th style={{textAlign:'right'}}>Docs in Subcategory</th>
-                    <th style={{textAlign:'right'}}>Total Site Docs</th>
-                    <th style={{textAlign:'right'}}>% in Subcategory</th>
-                    <th style={{textAlign:'right'}}>Users (30d)</th>
+                    <th style={{cursor:'pointer'}} onClick={() => handleSiteSort('name')}>Site Name{siteSort('name')}</th>
+                    <th style={{textAlign:'right',cursor:'pointer'}} onClick={() => handleSiteSort('catDocs')}>Docs in Subcategory{siteSort('catDocs')}</th>
+                    <th style={{textAlign:'right',cursor:'pointer'}} onClick={() => handleSiteSort('totalSiteDocs')}>Total Site Docs{siteSort('totalSiteDocs')}</th>
+                    <th style={{textAlign:'right',cursor:'pointer'}} onClick={() => handleSiteSort('pct')}>% in Subcategory{siteSort('pct')}</th>
+                    <th style={{textAlign:'right',cursor:'pointer'}} onClick={() => handleSiteSort('monthlyReads')}>Reads/mo{siteSort('monthlyReads')}</th>
+                    <th style={{textAlign:'right',cursor:'pointer'}} onClick={() => handleSiteSort('monthlyWrites')}>Writes/mo{siteSort('monthlyWrites')}</th>
+                    <th style={{textAlign:'right',cursor:'pointer'}} onClick={() => handleSiteSort('totalUsers')}>Users (30d){siteSort('totalUsers')}</th>
                     <th style={{textAlign:'center'}}>Files</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {sites.map(site => (
+                  {sortedSites.map(site => (
                     <tr key={site.id} className={`dd-tr ${selectedSite?.id === site.id ? 'dd-tr-active' : ''}`} onClick={() => { setSelectedSite(site); setSelectedFile(null); }}>
                       <td className="dd-td-name"><span className="dd-site-dot" style={{ background: category.color }} />{site.name}</td>
                       <td style={{textAlign:'right',fontWeight:600}}>{formatNumber(site.catDocs)}</td>
@@ -56,6 +77,8 @@ function SubcategoryDeepDive({ subcategory, category, onClose }) {
                           <span className="dd-pct-val" style={{ color: site.pct > 50 ? '#f97316' : '#a0a0b8' }}>{site.pct}%</span>
                         </div>
                       </td>
+                      <td style={{textAlign:'right'}}>{formatNumber(site.monthlyReads)}</td>
+                      <td style={{textAlign:'right'}}>{formatNumber(site.monthlyWrites)}</td>
                       <td style={{textAlign:'right'}}><span className="dd-users-badge">👥 {site.totalUsers}</span></td>
                       <td style={{textAlign:'center'}}><button className="dd-sample-btn">View ›</button></td>
                     </tr>
@@ -84,11 +107,20 @@ function SubcategoryDeepDive({ subcategory, category, onClose }) {
                 </div>
 
                 <div className="dd-section">
-                  <h4>🎯 AI Readiness</h4>
+                  <h4>🎯 Data State</h4>
                   <div className="dd-readiness-list">
                     <div className="dd-rd"><span className="dd-rd-lbl">🏷️ Unlabeled</span><div className="dd-rd-bar-w"><div className="dd-rd-bar" style={{width:`${selectedSite.classificationRisk}%`,background:readinessColor(selectedSite.classificationRisk)}}/></div><span className="dd-rd-v" style={{color:readinessColor(selectedSite.classificationRisk)}}>{selectedSite.classificationRisk}%</span></div>
                     <div className="dd-rd"><span className="dd-rd-lbl">🔓 Overexposed</span><div className="dd-rd-bar-w"><div className="dd-rd-bar" style={{width:`${selectedSite.exposureRisk}%`,background:readinessColor(selectedSite.exposureRisk)}}/></div><span className="dd-rd-v" style={{color:readinessColor(selectedSite.exposureRisk)}}>{selectedSite.exposureRisk}%</span></div>
                     <div className="dd-rd"><span className="dd-rd-lbl">🗑️ ROT</span><div className="dd-rd-bar-w"><div className="dd-rd-bar" style={{width:`${selectedSite.governanceRisk}%`,background:readinessColor(selectedSite.governanceRisk)}}/></div><span className="dd-rd-v" style={{color:readinessColor(selectedSite.governanceRisk)}}>{selectedSite.governanceRisk}%</span></div>
+                  </div>
+                </div>
+
+                <div className="dd-section">
+                  <h4>📊 Data Activity</h4>
+                  <div className="dd-readiness-list">
+                    <div className="dd-rd"><span className="dd-rd-lbl">📤 Exfiltration</span><div className="dd-rd-bar-w"><div className="dd-rd-bar" style={{width:`${selectedSite.activityRisk}%`,background:readinessColor(selectedSite.activityRisk)}}/></div><span className="dd-rd-v" style={{color:readinessColor(selectedSite.activityRisk)}}>{selectedSite.activityRisk}%</span></div>
+                    <div className="dd-rd"><span className="dd-rd-lbl">👤 User Risk</span><div className="dd-rd-bar-w"><div className="dd-rd-bar" style={{width:`${selectedSite.userRisk}%`,background:readinessColor(selectedSite.userRisk)}}/></div><span className="dd-rd-v" style={{color:readinessColor(selectedSite.userRisk)}}>{selectedSite.userRisk}%</span></div>
+                    <div className="dd-rd"><span className="dd-rd-lbl">🤖 AI & Agent</span><div className="dd-rd-bar-w"><div className="dd-rd-bar" style={{width:`${selectedSite.aiAgentRisk}%`,background:readinessColor(selectedSite.aiAgentRisk)}}/></div><span className="dd-rd-v" style={{color:readinessColor(selectedSite.aiAgentRisk)}}>{selectedSite.aiAgentRisk}%</span></div>
                   </div>
                 </div>
 
@@ -103,29 +135,71 @@ function SubcategoryDeepDive({ subcategory, category, onClose }) {
                   </div>
                 </div>
 
-                <div className="dd-section dd-mitigation">
-                  <div className="dd-mit-group">
-                    <div className="dd-mit-group-head" style={{borderLeftColor:'#8b5cf6'}}><span className="dd-mit-group-icon">🏷️</span><div><div className="dd-mit-group-title">Manage Unlabeled Content</div><div className="dd-mit-group-risk" style={{color:readinessColor(selectedSite.classificationRisk)}}>{selectedSite.classificationRisk}% unlabeled</div></div></div>
-                    <div className="dd-mit-group-btns">
-                      <button className="dd-mit-btn" onClick={() => setMitigationModal('container-label')}><span className="dd-mit-icon">🏷️</span><div><div className="dd-mit-title">Apply MIP Container Label</div><div className="dd-mit-sub">Set sensitivity label on SPO site</div></div></button>
-                      <button className="dd-mit-btn" onClick={() => setMitigationModal('label-in-cat')}><span className="dd-mit-icon">📄</span><div><div className="dd-mit-title">Label In-Subcategory Files</div><div className="dd-mit-sub">{formatNumber(selectedSite.catDocs)} files</div></div></button>
-                      <button className="dd-mit-btn" onClick={() => setMitigationModal('ai-classify')}><span className="dd-mit-icon">🤖</span><div><div className="dd-mit-title">AI-Native Classification</div><div className="dd-mit-sub">Graders, SIT & semantic classifiers</div></div></button>
-                    </div>
+                <div className="dd-section">
+                  <div className="dd-collapse-header" onClick={() => setShowStateActions(!showStateActions)}>
+                    <span className="dd-collapse-arrow">{showStateActions ? '▾' : '▸'}</span>
+                    <h4>Remediate Data State</h4>
+                    <span className="dd-collapse-hint">Label, permissions & retention actions</span>
                   </div>
-                  <div className="dd-mit-group">
-                    <div className="dd-mit-group-head" style={{borderLeftColor:'#f97316'}}><span className="dd-mit-group-icon">🔓</span><div><div className="dd-mit-group-title">Manage Overexposed Content</div><div className="dd-mit-group-risk" style={{color:readinessColor(selectedSite.exposureRisk)}}>{selectedSite.exposureRisk}% overexposed</div></div></div>
-                    <div className="dd-mit-group-btns">
-                      <button className="dd-mit-btn" onClick={() => setMitigationModal('risk-assessment')}><span className="dd-mit-icon">📋</span><div><div className="dd-mit-title">Add to Data Risk Assessment</div><div className="dd-mit-sub">Purview DSPM oversharing review</div></div></button>
-                      <button className="dd-mit-btn" onClick={() => setMitigationModal('perm-rightsizing')}><span className="dd-mit-icon">🤝</span><div><div className="dd-mit-title">Launch Permissions Rightsizing</div><div className="dd-mit-sub">Agent-driven owner outreach</div></div></button>
-                      <button className="dd-mit-btn" onClick={() => setMitigationModal('perm-guardrails')}><span className="dd-mit-icon">🛡️</span><div><div className="dd-mit-title">Create Permission Guardrails</div><div className="dd-mit-sub">Drift detection & auto-mitigation</div></div></button>
+                  {showStateActions && (
+                    <div className="dd-collapse-body">
+                      <div className="dd-mit-group">
+                        <div className="dd-mit-group-head" style={{borderLeftColor:'#8b5cf6'}}><span className="dd-mit-group-icon">🏷️</span><div><div className="dd-mit-group-title">Manage Unlabeled Content</div><div className="dd-mit-group-risk" style={{color:readinessColor(selectedSite.classificationRisk)}}>{selectedSite.classificationRisk}% unlabeled</div></div></div>
+                        <div className="dd-mit-group-btns">
+                          <button className="dd-mit-btn" onClick={() => setMitigationModal('container-label')}><span className="dd-mit-icon">🏷️</span><div><div className="dd-mit-title">Apply MIP Container Label</div><div className="dd-mit-sub">Set sensitivity label on SPO site</div></div></button>
+                          <button className="dd-mit-btn" onClick={() => setMitigationModal('label-in-cat')}><span className="dd-mit-icon">📄</span><div><div className="dd-mit-title">Label In-Subcategory Files</div><div className="dd-mit-sub">{formatNumber(selectedSite.catDocs)} files</div></div></button>
+                          <button className="dd-mit-btn" onClick={() => setMitigationModal('ai-classify')}><span className="dd-mit-icon">🤖</span><div><div className="dd-mit-title">AI-Native Classification</div><div className="dd-mit-sub">Graders, SIT & semantic classifiers</div></div></button>
+                        </div>
+                      </div>
+                      <div className="dd-mit-group">
+                        <div className="dd-mit-group-head" style={{borderLeftColor:'#f97316'}}><span className="dd-mit-group-icon">🔓</span><div><div className="dd-mit-group-title">Manage Overexposed Content</div><div className="dd-mit-group-risk" style={{color:readinessColor(selectedSite.exposureRisk)}}>{selectedSite.exposureRisk}% overexposed</div></div></div>
+                        <div className="dd-mit-group-btns">
+                          <button className="dd-mit-btn" onClick={() => setMitigationModal('risk-assessment')}><span className="dd-mit-icon">📋</span><div><div className="dd-mit-title">Add to Data Risk Assessment</div><div className="dd-mit-sub">Purview DSPM oversharing review</div></div></button>
+                          <button className="dd-mit-btn" onClick={() => setMitigationModal('perm-rightsizing')}><span className="dd-mit-icon">🤝</span><div><div className="dd-mit-title">Launch Permissions Rightsizing</div><div className="dd-mit-sub">Agent-driven owner outreach</div></div></button>
+                          <button className="dd-mit-btn" onClick={() => setMitigationModal('perm-guardrails')}><span className="dd-mit-icon">🛡️</span><div><div className="dd-mit-title">Create Permission Guardrails</div><div className="dd-mit-sub">Drift detection & auto-mitigation</div></div></button>
+                        </div>
+                      </div>
+                      <div className="dd-mit-group">
+                        <div className="dd-mit-group-head" style={{borderLeftColor:'#eab308'}}><span className="dd-mit-group-icon">🗑️</span><div><div className="dd-mit-group-title">Manage ROT Content</div><div className="dd-mit-group-risk" style={{color:readinessColor(selectedSite.governanceRisk)}}>{selectedSite.governanceRisk}% stale (1yr+)</div></div></div>
+                        <div className="dd-mit-group-btns">
+                          <button className="dd-mit-btn" onClick={() => setMitigationModal('retention-policy')}><span className="dd-mit-icon">📋</span><div><div className="dd-mit-title">Create Retention Policies</div><div className="dd-mit-sub">Purview DLM data lifecycle management</div></div></button>
+                        </div>
+                      </div>
                     </div>
+                  )}
+                </div>
+
+                <div className="dd-section">
+                  <div className="dd-collapse-header" onClick={() => setShowActivityActions(!showActivityActions)}>
+                    <span className="dd-collapse-arrow">{showActivityActions ? '▾' : '▸'}</span>
+                    <h4>Remediate Data Activity</h4>
+                    <span className="dd-collapse-hint">DLP, IRM & AI protection actions</span>
                   </div>
-                  <div className="dd-mit-group">
-                    <div className="dd-mit-group-head" style={{borderLeftColor:'#eab308'}}><span className="dd-mit-group-icon">🗑️</span><div><div className="dd-mit-group-title">Manage ROT Content</div><div className="dd-mit-group-risk" style={{color:readinessColor(selectedSite.governanceRisk)}}>{selectedSite.governanceRisk}% stale (1yr+)</div></div></div>
-                    <div className="dd-mit-group-btns">
-                      <button className="dd-mit-btn" onClick={() => setMitigationModal('retention-policy')}><span className="dd-mit-icon">📋</span><div><div className="dd-mit-title">Create Retention Policies</div><div className="dd-mit-sub">Purview DLM data lifecycle management</div></div></button>
+                  {showActivityActions && (
+                    <div className="dd-collapse-body">
+                      <div className="dd-mit-group">
+                        <div className="dd-mit-group-head" style={{borderLeftColor:'#f97316'}}><span className="dd-mit-group-icon">📤</span><div><div className="dd-mit-group-title">Manage Exfiltration Risk</div><div className="dd-mit-group-risk" style={{color:readinessColor(selectedSite.activityRisk)}}>{selectedSite.activityRisk}% unprotected activity</div></div></div>
+                        <div className="dd-mit-group-btns">
+                          <button className="dd-mit-btn" onClick={() => setMitigationModal('dlp-activity')}><span className="dd-mit-icon">🛡️</span><div><div className="dd-mit-title">Create DLP Policy</div><div className="dd-mit-sub">Cover exfiltration vectors</div></div></button>
+                          <button className="dd-mit-btn" onClick={() => setMitigationModal('dlp-alerts')}><span className="dd-mit-icon">🔔</span><div><div className="dd-mit-title">Configure Alerts</div><div className="dd-mit-sub">Alert on sensitive data movement</div></div></button>
+                        </div>
+                      </div>
+                      <div className="dd-mit-group">
+                        <div className="dd-mit-group-head" style={{borderLeftColor:'#ef4444'}}><span className="dd-mit-group-icon">👤</span><div><div className="dd-mit-group-title">Manage User Risk</div><div className="dd-mit-group-risk" style={{color:readinessColor(selectedSite.userRisk)}}>{selectedSite.userRisk}% users unmonitored</div></div></div>
+                        <div className="dd-mit-group-btns">
+                          <button className="dd-mit-btn" onClick={() => setMitigationModal('irm-policy')}><span className="dd-mit-icon">🔍</span><div><div className="dd-mit-title">Configure IRM Policy</div><div className="dd-mit-sub">Monitor risky user behavior</div></div></button>
+                          <button className="dd-mit-btn" onClick={() => setMitigationModal('adaptive-protection')}><span className="dd-mit-icon">🛡️</span><div><div className="dd-mit-title">Enable Adaptive Protection</div><div className="dd-mit-sub">Dynamic DLP based on risk level</div></div></button>
+                        </div>
+                      </div>
+                      <div className="dd-mit-group">
+                        <div className="dd-mit-group-head" style={{borderLeftColor:'#8b5cf6'}}><span className="dd-mit-group-icon">🤖</span><div><div className="dd-mit-group-title">Manage AI & Agent Risk</div><div className="dd-mit-group-risk" style={{color:readinessColor(selectedSite.aiAgentRisk)}}>{selectedSite.aiAgentRisk}% AI access uncontrolled</div></div></div>
+                        <div className="dd-mit-group-btns">
+                          <button className="dd-mit-btn" onClick={() => setMitigationModal('copilot-dlp-site')}><span className="dd-mit-icon">🔒</span><div><div className="dd-mit-title">Set Copilot DLP Controls</div><div className="dd-mit-sub">Restrict AI data processing</div></div></button>
+                          <button className="dd-mit-btn" onClick={() => setMitigationModal('agent-monitoring')}><span className="dd-mit-icon">🔍</span><div><div className="dd-mit-title">Monitor Agent Access</div><div className="dd-mit-sub">Track AI agent interactions</div></div></button>
+                        </div>
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
 
                 <div className="dd-section">
@@ -158,6 +232,12 @@ function SubcategoryDeepDive({ subcategory, category, onClose }) {
               {mitigationModal === 'perm-rightsizing' && '🤝 Launch Permissions Rightsizing'}
               {mitigationModal === 'perm-guardrails' && '🛡️ Create Permission Guardrails'}
               {mitigationModal === 'retention-policy' && '📋 Create Retention Policies'}
+              {mitigationModal === 'dlp-activity' && '🛡️ Create DLP Policy'}
+              {mitigationModal === 'dlp-alerts' && '🔔 Configure Activity Alerts'}
+              {mitigationModal === 'irm-policy' && '🔍 Configure IRM Policy'}
+              {mitigationModal === 'adaptive-protection' && '🛡️ Enable Adaptive Protection'}
+              {mitigationModal === 'copilot-dlp-site' && '🔒 Set Copilot DLP Controls'}
+              {mitigationModal === 'agent-monitoring' && '🔍 Monitor Agent Access'}
             </h3>
             <button className="dd-close" onClick={() => setMitigationModal(null)}>✕</button>
           </div>
@@ -170,6 +250,12 @@ function SubcategoryDeepDive({ subcategory, category, onClose }) {
             {mitigationModal === 'perm-rightsizing' && (<><p>Launch an <strong>agent-driven permissions rightsizing campaign</strong> — agents contact document owners to correct excessive access.</p><div className="dd-mit-impact"><div className="dd-mi"><span>📄 Files</span><strong>{formatNumber(selectedSite.totalSiteDocs)}</strong></div><div className="dd-mi"><span>🔓 Overexposed</span><strong style={{color:readinessColor(selectedSite.exposureRisk)}}>{selectedSite.exposureRisk}%</strong></div><div className="dd-mi"><span>⏱️ Campaign</span><strong>7–14 days</strong></div></div></>)}
             {mitigationModal === 'perm-guardrails' && (<><p>Create <strong>permission guardrails</strong> for continuous drift detection with auto-remediation alerts.</p><div className="dd-mit-impact"><div className="dd-mi"><span>📍 Site</span><strong>{selectedSite.name}</strong></div><div className="dd-mi"><span>👥 Users</span><strong>{selectedSite.totalUsers}</strong></div><div className="dd-mi"><span>🔄 Monitoring</span><strong>Continuous</strong></div></div></>)}
             {mitigationModal === 'retention-policy' && (<><p>Create <strong>retention policies</strong> using Purview DLM. ROT content inactive for 1+ year will be scheduled for deletion.</p><div className="dd-mit-field"><label>Retention Action</label><div className="dd-mit-select"><button className="dd-mit-opt dd-mit-opt-active">Delete files inactive for 1+ year</button><button className="dd-mit-opt">Move to archive after 1 year</button><button className="dd-mit-opt">Apply retention label and review</button></div></div><div className="dd-mit-impact"><div className="dd-mi"><span>🗑️ ROT</span><strong style={{color:readinessColor(selectedSite.governanceRisk)}}>{selectedSite.governanceRisk}%</strong></div><div className="dd-mi"><span>📄 ROT Files</span><strong>{formatNumber(Math.round(selectedSite.totalSiteDocs * selectedSite.governanceRisk / 100))}</strong></div></div></>)}
+            {mitigationModal === 'dlp-activity' && (<><p>Create a <strong>DLP policy</strong> to cover exfiltration vectors for <strong>{selectedSite.name}</strong> — downloads, external shares, USB, and cloud uploads.</p><div className="dd-mit-field"><label>Exfiltration Vectors</label><div className="dd-mit-select"><button className="dd-mit-opt dd-mit-opt-active">📥 Downloads & external sharing</button><button className="dd-mit-opt">💾 USB & removable media</button><button className="dd-mit-opt">☁️ Cloud upload destinations</button></div></div><div className="dd-mit-impact"><div className="dd-mi"><span>📤 Activity Risk</span><strong style={{color:readinessColor(selectedSite.activityRisk)}}>{selectedSite.activityRisk}%</strong></div><div className="dd-mi"><span>📄 Docs</span><strong>{formatNumber(selectedSite.totalSiteDocs)}</strong></div></div></>)}
+            {mitigationModal === 'dlp-alerts' && (<><p>Configure <strong>activity alerts</strong> for <strong>{selectedSite.name}</strong> to notify on sensitive data movement.</p><div className="dd-mit-field"><label>Alert Threshold</label><div className="dd-mit-select"><button className="dd-mit-opt">🔴 High sensitivity only</button><button className="dd-mit-opt dd-mit-opt-active">🟡 Medium & high sensitivity</button></div></div><div className="dd-mit-impact"><div className="dd-mi"><span>📤 Activity Risk</span><strong style={{color:readinessColor(selectedSite.activityRisk)}}>{selectedSite.activityRisk}%</strong></div><div className="dd-mi"><span>🔔 Monitoring</span><strong>Real-time</strong></div></div></>)}
+            {mitigationModal === 'irm-policy' && (<><p>Configure an <strong>Insider Risk Management policy</strong> for <strong>{selectedSite.name}</strong> using the Risky AI Usage template.</p><div className="dd-mit-field"><label>Policy Template</label><div className="dd-mit-select"><button className="dd-mit-opt dd-mit-opt-active">🔍 Risky AI Usage</button><button className="dd-mit-opt">📤 Data Theft by Departing Users</button><button className="dd-mit-opt">⚠️ General Data Leaks</button></div></div><div className="dd-mit-impact"><div className="dd-mi"><span>👤 User Risk</span><strong style={{color:readinessColor(selectedSite.userRisk)}}>{selectedSite.userRisk}%</strong></div><div className="dd-mi"><span>👥 Users</span><strong>{selectedSite.totalUsers}</strong></div></div></>)}
+            {mitigationModal === 'adaptive-protection' && (<><p>Enable <strong>Adaptive Protection</strong> for <strong>{selectedSite.name}</strong> — dynamic DLP enforcement based on insider risk level.</p><div className="dd-mit-field"><label>Protection Level</label><div className="dd-mit-select"><button className="dd-mit-opt dd-mit-opt-active">🛡️ Block high-risk users from sharing</button><button className="dd-mit-opt">⚠️ Warn elevated-risk users</button></div></div><div className="dd-mit-impact"><div className="dd-mi"><span>👤 User Risk</span><strong style={{color:readinessColor(selectedSite.userRisk)}}>{selectedSite.userRisk}%</strong></div><div className="dd-mi"><span>🔄 Enforcement</span><strong>Dynamic</strong></div></div></>)}
+            {mitigationModal === 'copilot-dlp-site' && (<><p>Set <strong>Copilot DLP controls</strong> for <strong>{selectedSite.name}</strong> to restrict AI services from processing sensitive data.</p><div className="dd-mit-field"><label>Restriction Level</label><div className="dd-mit-select"><button className="dd-mit-opt">🚫 Block all AI processing</button><button className="dd-mit-opt dd-mit-opt-active">🔒 Block for highly confidential</button></div></div><div className="dd-mit-impact"><div className="dd-mi"><span>🤖 AI Risk</span><strong style={{color:readinessColor(selectedSite.aiAgentRisk)}}>{selectedSite.aiAgentRisk}%</strong></div><div className="dd-mi"><span>📄 Docs</span><strong>{formatNumber(selectedSite.totalSiteDocs)}</strong></div></div></>)}
+            {mitigationModal === 'agent-monitoring' && (<><p>Enable <strong>agent access monitoring</strong> for <strong>{selectedSite.name}</strong> to track AI agent and automated service interactions.</p><div className="dd-mit-field"><label>Monitoring Scope</label><div className="dd-mit-select"><button className="dd-mit-opt dd-mit-opt-active">🤖 All AI agents & Copilot</button><button className="dd-mit-opt">🔌 Third-party integrations</button></div></div><div className="dd-mit-impact"><div className="dd-mi"><span>🤖 AI Risk</span><strong style={{color:readinessColor(selectedSite.aiAgentRisk)}}>{selectedSite.aiAgentRisk}%</strong></div><div className="dd-mi"><span>🔄 Monitoring</span><strong>Continuous</strong></div></div></>)}
             <div className="dd-mit-actions">
               <button className="dd-mit-apply">
                 {mitigationModal === 'container-label' && 'Apply Container Label'}
@@ -179,6 +265,12 @@ function SubcategoryDeepDive({ subcategory, category, onClose }) {
                 {mitigationModal === 'perm-rightsizing' && 'Launch Campaign'}
                 {mitigationModal === 'perm-guardrails' && 'Create Guardrails'}
                 {mitigationModal === 'retention-policy' && 'Create Policy'}
+                {mitigationModal === 'dlp-activity' && 'Create DLP Policy'}
+                {mitigationModal === 'dlp-alerts' && 'Configure Alerts'}
+                {mitigationModal === 'irm-policy' && 'Create IRM Policy'}
+                {mitigationModal === 'adaptive-protection' && 'Enable Protection'}
+                {mitigationModal === 'copilot-dlp-site' && 'Apply Controls'}
+                {mitigationModal === 'agent-monitoring' && 'Enable Monitoring'}
               </button>
               <button className="dd-mit-cancel" onClick={() => setMitigationModal(null)}>Cancel</button>
             </div>
@@ -257,6 +349,13 @@ function SubcategoryDeepDive({ subcategory, category, onClose }) {
       .dd-explore-site-btn{width:100%;padding:10px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s;font-family:inherit;margin-bottom:12px;background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.2);color:#86efac;text-align:center}
       .dd-explore-site-btn:hover{background:rgba(34,197,94,0.15);border-color:rgba(34,197,94,0.4);color:white}
       .last-scanned { font-size: 10px; color: #4a4a60; display: inline-flex; align-items: center; gap: 4px; }
+      .dd-collapse-header{display:flex;align-items:center;gap:6px;cursor:pointer;padding:6px 0;transition:all .15s}
+      .dd-collapse-header:hover{opacity:0.8}
+      .dd-collapse-arrow{font-size:11px;color:#6b6b80;width:14px}
+      .dd-collapse-header h4{font-size:11px;font-weight:600;margin:0;flex:1}
+      .dd-collapse-hint{font-size:9px;color:#4a4a60}
+      .dd-collapse-body{padding-top:8px;animation:ddCollapseIn .15s ease}
+      @keyframes ddCollapseIn{from{opacity:0;max-height:0}to{opacity:1;max-height:800px}}
     `}</style>
     </>,
     document.body
@@ -270,6 +369,7 @@ export default function SubcategoryView({ tier, category, selectedSub, onSelectS
   const [hoveredId, setHoveredId] = useState(null);
   const [selectedDetail, setSelectedDetail] = useState(null);
   const [deepDiveSub, setDeepDiveSub] = useState(null);
+  const [quickAction, setQuickAction] = useState(null);
 
   const subs = useMemo(() => getSubcategories(category.id, category.documentCount, category.classificationRisk, category.exposureRisk, category.governanceRisk, category.dlpCoverage, category.irmCoverage), [category]);
 
@@ -460,9 +560,24 @@ export default function SubcategoryView({ tier, category, selectedSub, onSelectS
               </div>
 
               <div className="sd-readiness">
-                <div className="sd-ri"><span className="sd-ri-lbl">🏷️ Unlabeled</span><div className="sd-ri-bar-w"><div className="sd-ri-bar" style={{width:`${activeSub.classificationRisk}%`,background:readinessColor(activeSub.classificationRisk)}}/></div><span className="sd-ri-v" style={{color:readinessColor(activeSub.classificationRisk)}}>{activeSub.classificationRisk}%</span></div>
-                <div className="sd-ri"><span className="sd-ri-lbl">🔓 Overexposed</span><div className="sd-ri-bar-w"><div className="sd-ri-bar" style={{width:`${activeSub.exposureRisk}%`,background:readinessColor(activeSub.exposureRisk)}}/></div><span className="sd-ri-v" style={{color:readinessColor(activeSub.exposureRisk)}}>{activeSub.exposureRisk}%</span></div>
-                <div className="sd-ri"><span className="sd-ri-lbl">🗑️ ROT</span><div className="sd-ri-bar-w"><div className="sd-ri-bar" style={{width:`${activeSub.governanceRisk}%`,background:readinessColor(activeSub.governanceRisk)}}/></div><span className="sd-ri-v" style={{color:readinessColor(activeSub.governanceRisk)}}>{activeSub.governanceRisk}%</span></div>
+                <div className="sd-ri">
+                  <span className="sd-ri-lbl">🏷️ Unlabeled</span>
+                  <div className="sd-ri-bar-w"><div className="sd-ri-bar" style={{width:`${activeSub.classificationRisk}%`,background:readinessColor(activeSub.classificationRisk)}}/></div>
+                  <span className="sd-ri-v" style={{color:readinessColor(activeSub.classificationRisk)}}>{activeSub.classificationRisk}%</span>
+                  <button className="sd-ri-action" onClick={() => setQuickAction({type:'label',cat:activeSub})}>Label all →</button>
+                </div>
+                <div className="sd-ri">
+                  <span className="sd-ri-lbl">🔓 Overexposed</span>
+                  <div className="sd-ri-bar-w"><div className="sd-ri-bar" style={{width:`${activeSub.exposureRisk}%`,background:readinessColor(activeSub.exposureRisk)}}/></div>
+                  <span className="sd-ri-v" style={{color:readinessColor(activeSub.exposureRisk)}}>{activeSub.exposureRisk}%</span>
+                  <button className="sd-ri-action" onClick={() => setQuickAction({type:'permissions',cat:activeSub})}>Review perms →</button>
+                </div>
+                <div className="sd-ri">
+                  <span className="sd-ri-lbl">🗑️ ROT</span>
+                  <div className="sd-ri-bar-w"><div className="sd-ri-bar" style={{width:`${activeSub.governanceRisk}%`,background:readinessColor(activeSub.governanceRisk)}}/></div>
+                  <span className="sd-ri-v" style={{color:readinessColor(activeSub.governanceRisk)}}>{activeSub.governanceRisk}%</span>
+                  <button className="sd-ri-action" onClick={() => setQuickAction({type:'retention',cat:activeSub})}>Apply retention →</button>
+                </div>
               </div>
 
 
@@ -504,6 +619,70 @@ export default function SubcategoryView({ tier, category, selectedSub, onSelectS
 
       {deepDiveSub && (
         <SubcategoryDeepDive subcategory={deepDiveSub} category={category} onClose={() => setDeepDiveSub(null)} />
+      )}
+
+      {quickAction && (
+        <div className="cd-qa-overlay" onClick={() => setQuickAction(null)}>
+          <div className="cd-qa-modal" onClick={e => e.stopPropagation()}>
+            <div className="cd-qa-header">
+              <h3>
+                {quickAction.type === 'label' && '🏷️ Label All Unlabeled Content'}
+                {quickAction.type === 'permissions' && '🔓 Launch Permissions Review'}
+                {quickAction.type === 'retention' && '🗑️ Apply Retention Policy'}
+              </h3>
+              <button className="cd-qa-close" onClick={() => setQuickAction(null)}>✕</button>
+            </div>
+            <div className="cd-qa-body">
+              <div className="cd-qa-scope">
+                <span className="cd-qa-scope-icon">{quickAction.cat.icon}</span>
+                <div>
+                  <strong>{quickAction.cat.name}</strong>
+                  <span>{formatNumber(quickAction.cat.documentCount)} documents across {formatNumber(quickAction.cat.siteCount)} sites</span>
+                </div>
+              </div>
+
+              {quickAction.type === 'label' && (
+                <>
+                  <p>Apply the sensitivity label <strong>{quickAction.cat.name}_LABEL</strong> to all <strong>{formatNumber(Math.round(quickAction.cat.documentCount * quickAction.cat.classificationRisk / 100))}</strong> unlabeled files across all {formatNumber(quickAction.cat.siteCount)} sites in this category.</p>
+                  <div className="cd-qa-impact">
+                    <div><span>📄 Files to label</span><strong>{formatNumber(Math.round(quickAction.cat.documentCount * quickAction.cat.classificationRisk / 100))}</strong></div>
+                    <div><span>📍 Sites affected</span><strong>{formatNumber(quickAction.cat.siteCount)}</strong></div>
+                    <div><span>🏷️ Label</span><strong>{quickAction.cat.name}_LABEL</strong></div>
+                  </div>
+                </>
+              )}
+              {quickAction.type === 'permissions' && (
+                <>
+                  <p>Launch an agent-driven permissions review campaign for all <strong>{formatNumber(Math.round(quickAction.cat.documentCount * quickAction.cat.exposureRisk / 100))}</strong> overexposed files in this category. Site owners will be contacted to rightsize permissions.</p>
+                  <div className="cd-qa-impact">
+                    <div><span>📄 Files to review</span><strong>{formatNumber(Math.round(quickAction.cat.documentCount * quickAction.cat.exposureRisk / 100))}</strong></div>
+                    <div><span>📍 Sites affected</span><strong>{formatNumber(quickAction.cat.siteCount)}</strong></div>
+                    <div><span>⏱️ Campaign duration</span><strong>7–14 days</strong></div>
+                  </div>
+                </>
+              )}
+              {quickAction.type === 'retention' && (
+                <>
+                  <p>Apply a retention policy to all <strong>{formatNumber(Math.round(quickAction.cat.documentCount * quickAction.cat.governanceRisk / 100))}</strong> stale files in this category that haven't been accessed in over a year. Files will be flagged for deletion after a 30-day review period.</p>
+                  <div className="cd-qa-impact">
+                    <div><span>🗑️ Stale files</span><strong>{formatNumber(Math.round(quickAction.cat.documentCount * quickAction.cat.governanceRisk / 100))}</strong></div>
+                    <div><span>📍 Sites affected</span><strong>{formatNumber(quickAction.cat.siteCount)}</strong></div>
+                    <div><span>⏱️ Review period</span><strong>30 days</strong></div>
+                  </div>
+                </>
+              )}
+
+              <div className="cd-qa-actions">
+                <button className="cd-qa-apply" onClick={() => setQuickAction(null)}>
+                  {quickAction.type === 'label' && 'Apply Labels'}
+                  {quickAction.type === 'permissions' && 'Launch Campaign'}
+                  {quickAction.type === 'retention' && 'Apply Retention'}
+                </button>
+                <button className="cd-qa-cancel" onClick={() => setQuickAction(null)}>Cancel</button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
 
       <style>{`
@@ -555,6 +734,33 @@ export default function SubcategoryView({ tier, category, selectedSub, onSelectS
         .sd-ri-bar-w { flex:1; height:4px; background:rgba(255,255,255,0.06); border-radius:2px; overflow:hidden; }
         .sd-ri-bar { height:100%; border-radius:2px; transition:width .5s ease; }
         .sd-ri-v { font-size:10px; font-weight:700; min-width:28px; text-align:right; }
+        .sd-ri-action{font-size:8px;padding:2px 8px;border-radius:4px;border:1px solid rgba(99,102,241,0.2);background:rgba(99,102,241,0.06);color:#a5b4fc;cursor:pointer;font-family:inherit;transition:all .12s;white-space:nowrap;margin-left:4px;flex-shrink:0}
+        .sd-ri-action:hover{background:rgba(99,102,241,0.15);border-color:rgba(99,102,241,0.4);color:white}
+
+        .cd-qa-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(8px);z-index:1000;display:flex;align-items:center;justify-content:center;animation:cdQaIn .15s ease}
+        @keyframes cdQaIn{from{opacity:0}to{opacity:1}}
+        .cd-qa-modal{background:#13132a;border:1px solid rgba(99,102,241,0.25);border-radius:14px;width:460px;max-height:80vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.5);animation:cdQaScale .2s ease}
+        @keyframes cdQaScale{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
+        .cd-qa-header{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid rgba(255,255,255,0.06)}
+        .cd-qa-header h3{font-size:14px;font-weight:600;margin:0}
+        .cd-qa-close{background:none;border:1px solid rgba(255,255,255,0.1);color:#6b6b80;width:24px;height:24px;border-radius:6px;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;transition:all .15s}
+        .cd-qa-close:hover{background:rgba(255,255,255,0.08);color:white}
+        .cd-qa-body{padding:16px 20px}
+        .cd-qa-body p{font-size:12px;color:#a0a0b8;line-height:1.6;margin:0 0 14px}
+        .cd-qa-body strong{color:#e0e0f0}
+        .cd-qa-scope{display:flex;gap:10px;align-items:center;padding:10px 12px;margin-bottom:14px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:8px}
+        .cd-qa-scope-icon{font-size:22px}
+        .cd-qa-scope strong{display:block;font-size:13px;font-weight:600;color:#e0e0f0}
+        .cd-qa-scope span{font-size:10px;color:#6b6b80}
+        .cd-qa-impact{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+        .cd-qa-impact>div{flex:1;min-width:100px;text-align:center;padding:8px 6px;background:rgba(255,255,255,0.03);border-radius:7px}
+        .cd-qa-impact span{display:block;font-size:9px;color:#6b6b80;margin-bottom:2px}
+        .cd-qa-impact strong{font-size:13px;color:#e0e0f0}
+        .cd-qa-actions{display:flex;gap:8px;justify-content:flex-end;padding-top:12px;border-top:1px solid rgba(255,255,255,0.06)}
+        .cd-qa-apply{padding:8px 18px;border-radius:8px;font-size:12px;font-weight:600;background:linear-gradient(135deg,#6366f1,#8b5cf6);border:none;color:white;cursor:pointer;font-family:inherit;transition:all .15s}
+        .cd-qa-apply:hover{opacity:0.9}
+        .cd-qa-cancel{padding:8px 14px;border-radius:8px;font-size:12px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:#a0a0b8;cursor:pointer;font-family:inherit;transition:all .15s}
+        .cd-qa-cancel:hover{background:rgba(255,255,255,0.1)}
 
 
 

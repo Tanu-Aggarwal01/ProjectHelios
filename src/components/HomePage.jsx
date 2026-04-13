@@ -38,7 +38,7 @@ function PlatformIcon({ item }) {
 }
 
 export default function HomePage({ onNavigateToTiers }) {
-  const [selectedPlatform, setSelectedPlatform] = useState('Microsoft 365');
+  const [selectedPlatform, setSelectedPlatform] = useState('Microsoft Fabric');
   const [protectionModal, setProtectionModal] = useState(null);
 
   const tier1 = tiers[0];
@@ -46,7 +46,7 @@ export default function HomePage({ onNavigateToTiers }) {
   return (
     <div className="home-page">
       {/* ── Hero Section ── */}
-      <section className="hp-hero">
+      <section className="hp-hero" style={selectedPlatform !== 'Microsoft 365' ? {opacity:1} : undefined}>
         <h2 className="hp-hero-title">Data Security Posture Management</h2>
         <p className="hp-hero-desc">
           Use Data Security Posture Management (DSPM) to discover and secure all your sensitive data in Microsoft 365, Fabric, Foundry and non-Microsoft data sources, including Databricks, Snowflake, SAP, ServiceNow, Salesforce and Google Cloud.
@@ -57,7 +57,7 @@ export default function HomePage({ onNavigateToTiers }) {
       </section>
 
       {/* ── Data Source Pills ── */}
-      <section className="hp-pills-section">
+      <section className="hp-pills-section" style={selectedPlatform !== 'Microsoft 365' ? {opacity:1} : undefined}>
         {platformData.map((group) => (
           <div className="hp-pill-group" key={group.group}>
             <span className="hp-pill-label">{group.group}</span>
@@ -78,9 +78,10 @@ export default function HomePage({ onNavigateToTiers }) {
       </section>
 
       {/* ── Main Content Area ── */}
-      {selectedPlatform === 'Microsoft 365' ? (
+      {(selectedPlatform === 'Microsoft 365' || selectedPlatform === 'Microsoft Fabric') ? (
         <>
-          {/* ── Unified Hero: Get Your Data Estate Ready for AI ── */}
+          {/* Hero card — only for M365 */}
+          {selectedPlatform === 'Microsoft 365' && (
           <section className="hp-hero-card">
             <div className="hp-hero-card-top">
               <h3 className="hp-hero-card-title">🚀 Get Your Data Estate Ready for AI</h3>
@@ -118,23 +119,26 @@ export default function HomePage({ onNavigateToTiers }) {
                 </div>
 
                 <div className="hp-lane-risks">
-                  <div className="hp-lane-risk-row">
+                  <div className="hp-lane-risk-row hp-has-tooltip">
                     <span className="hp-lane-risk-icon">🏷️</span>
                     <span className="hp-lane-risk-label">Unlabeled</span>
                     <div className="hp-lane-risk-bar"><div style={{ width: `${tier1.classificationRisk}%`, background: readinessColor(tier1.classificationRisk) }} /></div>
                     <span className="hp-lane-risk-val" style={{ color: readinessColor(tier1.classificationRisk) }}>{tier1.classificationRisk}%</span>
+                    <div className="hp-risk-tooltip">Unlabeled content can't be protected by DLP policies — Copilot and AI agents can freely access, summarize, and share this data without any controls.</div>
                   </div>
-                  <div className="hp-lane-risk-row">
+                  <div className="hp-lane-risk-row hp-has-tooltip">
                     <span className="hp-lane-risk-icon">🔓</span>
                     <span className="hp-lane-risk-label">Overexposed</span>
                     <div className="hp-lane-risk-bar"><div style={{ width: `${tier1.exposureRisk}%`, background: readinessColor(tier1.exposureRisk) }} /></div>
                     <span className="hp-lane-risk-val" style={{ color: readinessColor(tier1.exposureRisk) }}>{tier1.exposureRisk}%</span>
+                    <div className="hp-risk-tooltip">Files with broad permissions are visible to Copilot for every user who has access — one overshared file can surface sensitive data in AI responses across your organization.</div>
                   </div>
-                  <div className="hp-lane-risk-row">
+                  <div className="hp-lane-risk-row hp-has-tooltip">
                     <span className="hp-lane-risk-icon">🗑️</span>
                     <span className="hp-lane-risk-label">ROT</span>
                     <div className="hp-lane-risk-bar"><div style={{ width: `${tier1.governanceRisk}%`, background: readinessColor(tier1.governanceRisk) }} /></div>
                     <span className="hp-lane-risk-val" style={{ color: readinessColor(tier1.governanceRisk) }}>{tier1.governanceRisk}%</span>
+                    <div className="hp-risk-tooltip">Stale content pollutes AI responses with outdated information and increases your attack surface — Copilot doesn't know a file is obsolete.</div>
                   </div>
                 </div>
 
@@ -167,17 +171,6 @@ export default function HomePage({ onNavigateToTiers }) {
                 <p className="hp-lane-desc">Start managing active risks today - these controls get stronger as you improve your data hygiene with labeling, right-sizing permissions and removing ROT.</p>
 
                 <div className="hp-lane-controls">
-                  <div className="hp-lc-card" onClick={() => setProtectionModal('copilot-dlp')}>
-                    <div className="hp-lc-card-top">
-                      <span className="hp-lc-icon">🔒</span>
-                      <strong>Prevent sensitive data from being processed by AI</strong>
-                      <span className="hp-lc-arrow">→</span>
-                    </div>
-                    <div className="hp-lc-chips">
-                      <div className="hp-lc-chip hp-lc-chip-on"><span className="hp-lc-dot hp-lc-dot-on" /><span className="hp-lc-chip-label">Label inheritance</span></div>
-                      <div className="hp-lc-chip hp-lc-chip-on"><span className="hp-lc-dot hp-lc-dot-on" /><span className="hp-lc-chip-label">DLP Policies active</span></div>
-                    </div>
-                  </div>
                   <div className="hp-lc-card" onClick={() => setProtectionModal('inline-dlp')}>
                     <div className="hp-lc-card-top">
                       <span className="hp-lc-icon">🛡️</span>
@@ -187,6 +180,17 @@ export default function HomePage({ onNavigateToTiers }) {
                     <div className="hp-lc-chips">
                       <div className="hp-lc-chip hp-lc-chip-on"><span className="hp-lc-dot hp-lc-dot-on" /><span className="hp-lc-chip-label">DLP prompt protection</span></div>
                       <div className="hp-lc-chip hp-lc-chip-off"><span className="hp-lc-dot hp-lc-dot-off" /><span className="hp-lc-chip-label">DLP response protection</span></div>
+                    </div>
+                  </div>
+                  <div className="hp-lc-card" onClick={() => setProtectionModal('copilot-dlp')}>
+                    <div className="hp-lc-card-top">
+                      <span className="hp-lc-icon">🔒</span>
+                      <strong>Prevent sensitive data from being processed by AI</strong>
+                      <span className="hp-lc-arrow">→</span>
+                    </div>
+                    <div className="hp-lc-chips">
+                      <div className="hp-lc-chip hp-lc-chip-on"><span className="hp-lc-dot hp-lc-dot-on" /><span className="hp-lc-chip-label">Label inheritance</span></div>
+                      <div className="hp-lc-chip hp-lc-chip-on"><span className="hp-lc-dot hp-lc-dot-on" /><span className="hp-lc-chip-label">DLP Policies active</span></div>
                     </div>
                   </div>
                   <div className="hp-lc-card" onClick={() => setProtectionModal('irm')}>
@@ -204,9 +208,10 @@ export default function HomePage({ onNavigateToTiers }) {
               </div>
             </div>
           </section>
+          )}
 
           {/* Key Posture Metrics */}
-          <section className="hp-section">
+          <section className="hp-section" style={selectedPlatform === 'Microsoft Fabric' ? {opacity:1} : undefined}>
             <h3 className="hp-section-title">Key posture metrics</h3>
             <p className="hp-section-sub">Review key data security posture metrics for your organization's data sources from the last 30 days.</p>
             <div className="hp-posture-cards">
@@ -226,7 +231,7 @@ export default function HomePage({ onNavigateToTiers }) {
           </section>
 
           {/* Top Objectives */}
-          <section className="hp-section">
+          <section className="hp-section" style={selectedPlatform === 'Microsoft Fabric' ? {opacity:1} : undefined}>
             <h3 className="hp-section-title">Top objectives to address security risks</h3>
             <p className="hp-section-sub">Focusing on these objectives helps you monitor key areas of your data security posture to prevent risks to sensitive data.</p>
             <div className="hp-obj-cards">
@@ -408,7 +413,7 @@ export default function HomePage({ onNavigateToTiers }) {
         }
 
         /* Hero */
-        .hp-hero { max-width: 800px; margin-bottom: 28px; }
+        .hp-hero { max-width: 800px; margin-bottom: 28px; opacity: 0.25; }
         .hp-hero-title {
           font-size: 28px; font-weight: 800; letter-spacing: -0.8px; margin-bottom: 10px;
           background: linear-gradient(135deg, #e0e0ff 0%, #a5b4fc 100%);
@@ -423,7 +428,7 @@ export default function HomePage({ onNavigateToTiers }) {
 
         /* Pills */
         .hp-pills-section {
-          display: flex; flex-direction: column; gap: 12px; margin-bottom: 28px;
+          display: flex; flex-direction: column; gap: 12px; margin-bottom: 28px; opacity: 0.25;
         }
         .hp-pill-group { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
         .hp-pill-label { font-size: 11px; color: #6b6b80; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; min-width: 150px; }
@@ -444,7 +449,8 @@ export default function HomePage({ onNavigateToTiers }) {
         /* Unified Hero Card */
         .hp-hero-card {
           position: relative; margin-bottom: 32px; border-radius: 16px; padding: 2px;
-          background: linear-gradient(135deg, rgba(99,102,241,0.35), rgba(139,92,246,0.25), rgba(59,130,246,0.2));
+          background: linear-gradient(135deg, rgba(99,102,241,0.5), rgba(139,92,246,0.4), rgba(59,130,246,0.35));
+          box-shadow: 0 0 40px rgba(99,102,241,0.15), 0 0 80px rgba(139,92,246,0.08);
         }
         .hp-hero-card-top {
           background: rgba(13,13,32,0.92); border-radius: 14px 14px 0 0; padding: 24px 28px 16px;
@@ -486,6 +492,18 @@ export default function HomePage({ onNavigateToTiers }) {
         }
         .hp-lane-risk-bar > div { height: 100%; border-radius: 3px; transition: width 0.8s ease; }
         .hp-lane-risk-val { font-size: 12px; font-weight: 700; width: 36px; text-align: right; }
+
+        /* Risk tooltips */
+        .hp-has-tooltip { position: relative; cursor: help; }
+        .hp-risk-tooltip {
+          display: none; position: absolute; left: 0; bottom: calc(100% + 8px);
+          width: 280px; padding: 10px 14px; border-radius: 8px;
+          background: rgba(15,15,35,0.97); border: 1px solid rgba(99,102,241,0.25);
+          box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+          font-size: 11px; color: #c0c0d8; line-height: 1.5;
+          z-index: 100; pointer-events: none;
+        }
+        .hp-has-tooltip:hover .hp-risk-tooltip { display: block; }
 
         /* AI-Native Classification callout */
         .hp-ai-class-callout {
@@ -555,7 +573,7 @@ export default function HomePage({ onNavigateToTiers }) {
         .hp-lane-cta:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(99,102,241,0.4); }
 
         /* Sections */
-        .hp-section { margin-bottom: 32px; }
+        .hp-section { margin-bottom: 32px; opacity: 0.25; }
         .hp-section-title { font-size: 18px; font-weight: 700; letter-spacing: -0.3px; margin-bottom: 4px; }
         .hp-section-sub { font-size: 13px; color: #8888a0; margin-bottom: 16px; line-height: 1.5; }
 

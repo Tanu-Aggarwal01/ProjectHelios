@@ -119,13 +119,135 @@ export default function SiteExplorer({ site, category, onClose }) {
   /* ── mitigation modal content ── */
   const renderMitigationModal = () => {
     if (!mitigationModal) return null;
-    const typeMap = {
-      unlabeled: { title: '🏷️ Fix Unlabeled Files', items: files.filter(f => f.isUnlabeled), action: `Apply sensitivity labels to ${mitCounts.unlabeled} unlabeled file(s). The suggested label for each file is based on its category.` },
-      overexposed: { title: '🔓 Fix Overexposed Files', items: files.filter(f => f.isOverexposed), action: 'Restrict sharing permissions' },
-      rot: { title: '🗑️ Fix ROT Files', items: files.filter(f => f.isROT), action: 'Archive or delete stale content' },
+
+    const unlabeledFiles = files.filter(f => f.isUnlabeled);
+    const overexposedFiles = files.filter(f => f.isOverexposed);
+    const rotFiles = files.filter(f => f.isROT);
+
+    // Determine dominant category from files
+    const catCounts = {};
+    files.forEach(f => { if (f.category && f.category !== 'Unknown') catCounts[f.category] = (catCounts[f.category] || 0) + 1; });
+    const dominantCategory = Object.entries(catCounts).sort((a,b) => b[1] - a[1])[0]?.[0] || 'General';
+
+    const modalConfig = {
+      'folder-auto-label': {
+        title: '🏷️ Auto-Label This Folder',
+        desc: `Apply sensitivity labels to all ${unlabeledFiles.length} unlabeled file(s) in "${selectedFolder?.name}". The suggested label is based on the dominant category in this folder.`,
+        content: (
+          <>
+            <div className="dd-mit-field"><label>Suggested label</label>
+              <div className="dd-mit-select">
+                <button className="dd-mit-opt dd-mit-opt-active">{dominantCategory}_LABEL (recommended)</button>
+                {['General', 'Confidential', 'Highly Confidential', 'Restricted'].map(l => <button key={l} className="dd-mit-opt">{l}</button>)}
+              </div>
+            </div>
+            <div className="dd-mit-info-row"><span>📄 Files to label</span><strong>{unlabeledFiles.length}</strong></div>
+            <div className="dd-mit-info-row"><span>📂 Folder</span><strong>{selectedFolder?.name}</strong></div>
+            <div className="dd-mit-file-preview">{unlabeledFiles.slice(0,5).map(f => <div key={f.id} className="dd-mit-file-item">{fileIcon(f.type)} {f.name} <span className="dd-mit-file-suggest">→ {f.category === 'Unknown' ? 'General' : f.category}_LABEL</span></div>)}{unlabeledFiles.length > 5 && <div className="dd-mit-file-more">+{unlabeledFiles.length - 5} more files</div>}</div>
+          </>
+        ),
+        action: 'Apply Labels'
+      },
+      'folder-ai-classify': {
+        title: '🤖 AI-Native Classification',
+        desc: `Run AI-native classification on all ${files.length} files in "${selectedFolder?.name}" using Smart SITs and semantic classifiers for high-accuracy labeling.`,
+        content: (
+          <>
+            <div className="dd-mit-steps-compact">
+              <div className="dd-mit-step-c"><span className="dd-mit-step-n">1</span><span>Content Analysis — AI graders analyze each file</span></div>
+              <div className="dd-mit-step-c"><span className="dd-mit-step-n">2</span><span>SIT Detection — Scan for sensitive information types</span></div>
+              <div className="dd-mit-step-c"><span className="dd-mit-step-n">3</span><span>Auto-Label — Apply labels based on confidence scores</span></div>
+            </div>
+            <div className="dd-mit-info-row"><span>📄 Files to scan</span><strong>{files.length}</strong></div>
+            <div className="dd-mit-info-row"><span>🏷️ Currently unlabeled</span><strong>{unlabeledFiles.length}</strong></div>
+            <div className="dd-mit-info-row"><span>⏱️ Estimated time</span><strong>~{Math.max(2, Math.round(files.length / 3))} min</strong></div>
+          </>
+        ),
+        action: 'Start Classification'
+      },
+      'folder-restrict': {
+        title: '🔒 Restrict Folder Permissions',
+        desc: `Restrict access permissions for all ${overexposedFiles.length} overexposed file(s) in "${selectedFolder?.name}". ${files.length} total files, ${mitCounts.overexposed} have excessive access.`,
+        content: (
+          <>
+            <div className="dd-mit-field"><label>Restrict to</label>
+              <div className="dd-mit-select">
+                <button className="dd-mit-opt">Remove all "Everyone" and "Anyone with link" sharing</button>
+                <button className="dd-mit-opt">Limit to users who accessed in last 30 days</button>
+                <button className="dd-mit-opt">Restrict to folder owner + specific users</button>
+                <button className="dd-mit-opt dd-mit-opt-active">Remove external sharing links only</button>
+              </div>
+            </div>
+            <div className="dd-mit-info-row"><span>📄 Files affected</span><strong>{overexposedFiles.length}</strong></div>
+            <div className="dd-mit-info-row"><span>📂 Folder</span><strong>{selectedFolder?.name}</strong></div>
+          </>
+        ),
+        action: 'Apply Restrictions'
+      },
+      'folder-inherit': {
+        title: '🔄 Inherit Site Permissions',
+        desc: `Reset permissions on "${selectedFolder?.name}" to inherit from the parent site defaults. This removes any custom permission overrides on files in this folder.`,
+        content: (
+          <>
+            <p style={{fontSize:11,color:'#f97316',padding:'8px 12px',background:'rgba(249,115,22,0.06)',borderRadius:7,border:'1px solid rgba(249,115,22,0.15)'}}>⚠️ This will remove all custom permissions on {files.length} files and reset to site-level defaults. Users with custom access will lose their permissions.</p>
+            <div className="dd-mit-info-row"><span>📄 Files to reset</span><strong>{files.length}</strong></div>
+            <div className="dd-mit-info-row"><span>🔓 Currently overexposed</span><strong>{overexposedFiles.length}</strong></div>
+            <div className="dd-mit-info-row"><span>📂 Folder</span><strong>{selectedFolder?.name}</strong></div>
+          </>
+        ),
+        action: 'Reset Permissions'
+      },
+      'folder-retention': {
+        title: '📋 Apply Retention Policy',
+        desc: `Apply a data lifecycle management policy to ${rotFiles.length} stale file(s) in "${selectedFolder?.name}" that haven't been accessed in over a year.`,
+        content: (
+          <>
+            <div className="dd-mit-field"><label>Retention action</label>
+              <div className="dd-mit-select">
+                <button className="dd-mit-opt dd-mit-opt-active">Delete files after 30-day review period</button>
+                <button className="dd-mit-opt">Move stale files to archive</button>
+                <button className="dd-mit-opt">Apply "Review Required" retention label</button>
+                <button className="dd-mit-opt">Apply "Regulatory Hold" retention label</button>
+              </div>
+            </div>
+            <div className="dd-mit-info-row"><span>🗑️ Stale files (1yr+)</span><strong>{rotFiles.length}</strong></div>
+            <div className="dd-mit-info-row"><span>📂 Folder</span><strong>{selectedFolder?.name}</strong></div>
+            <div className="dd-mit-file-preview">{rotFiles.slice(0,5).map(f => <div key={f.id} className="dd-mit-file-item">{fileIcon(f.type)} {f.name} <span style={{color:'#6b6b80',fontSize:9}}>last accessed: {f.lastAccessed}</span></div>)}{rotFiles.length > 5 && <div className="dd-mit-file-more">+{rotFiles.length - 5} more files</div>}</div>
+          </>
+        ),
+        action: 'Apply Retention'
+      },
+      'folder-flag': {
+        title: '🚩 Flag Folder for Review',
+        desc: `Flag "${selectedFolder?.name}" for review by the site owner or compliance team to determine the appropriate disposition for its ${files.length} files.`,
+        content: (
+          <>
+            <div className="dd-mit-field"><label>Send review to</label>
+              <div className="dd-mit-select">
+                <button className="dd-mit-opt dd-mit-opt-active">Site owner</button>
+                <button className="dd-mit-opt">Compliance team</button>
+                <button className="dd-mit-opt">Custom reviewer</button>
+              </div>
+            </div>
+            <div className="dd-mit-field"><label>Review reason</label>
+              <div className="dd-mit-select">
+                <button className="dd-mit-opt dd-mit-opt-active">Stale content — not accessed in 1+ year</button>
+                <button className="dd-mit-opt">Suspected sensitive content needs review</button>
+                <button className="dd-mit-opt">Permissions need administrator review</button>
+                <button className="dd-mit-opt">Redundant or duplicate content</button>
+              </div>
+            </div>
+            <div className="dd-mit-info-row"><span>📄 Files in folder</span><strong>{files.length}</strong></div>
+            <div className="dd-mit-info-row"><span>📂 Folder</span><strong>{selectedFolder?.name}</strong></div>
+          </>
+        ),
+        action: 'Send for Review'
+      }
     };
-    const cfg = typeMap[mitigationModal];
+
+    const cfg = modalConfig[mitigationModal];
     if (!cfg) return null;
+
     return (
       <div className="dd-mit-overlay" onClick={() => setMitigationModal(null)}>
         <div className="dd-mit-modal" onClick={e => e.stopPropagation()}>
@@ -133,19 +255,13 @@ export default function SiteExplorer({ site, category, onClose }) {
             <h3>{cfg.title}</h3>
             <button className="dd-mit-close" onClick={() => setMitigationModal(null)}>✕</button>
           </div>
-          <p className="dd-mit-desc">{cfg.action}{mitigationModal !== 'unlabeled' ? ` for ${cfg.items.length} file(s) in this folder.` : ''}</p>
-          <div className="dd-mit-list">
-            {cfg.items.map(f => (
-              <div key={f.id} className="dd-mit-item">
-                <span>{fileIcon(f.type)} {f.name}</span>
-                {mitigationModal === 'unlabeled' && <span style={{ color: '#a5b4fc', fontSize: 10, marginLeft: 8 }}>→ {f.category === 'Unknown' ? 'General' : f.category}_LABEL</span>}
-                <span style={{ color: '#94a3b8', fontSize: 10 }}>{f.fullPath}</span>
-              </div>
-            ))}
-          </div>
-          <div className="dd-mit-actions">
-            <button className="dd-mit-btn-primary" onClick={() => setMitigationModal(null)}>Apply to All</button>
-            <button className="dd-mit-btn-secondary" onClick={() => setMitigationModal(null)}>Cancel</button>
+          <div className="dd-mit-body">
+            <p className="dd-mit-desc">{cfg.desc}</p>
+            {cfg.content}
+            <div className="dd-mit-actions">
+              <button className="dd-mit-apply" onClick={() => setMitigationModal(null)}>{cfg.action}</button>
+              <button className="dd-mit-cancel" onClick={() => setMitigationModal(null)}>Cancel</button>
+            </div>
           </div>
         </div>
       </div>
@@ -240,10 +356,28 @@ export default function SiteExplorer({ site, category, onClose }) {
                     <span className="se-folder-count">{selectedFolder.fileCount} files</span>
                     <RiskBars u={selectedFolder.classificationRisk} e={selectedFolder.exposureRisk} r={selectedFolder.governanceRisk} />
                   </div>
-                  <div className="se-mit-bar">
-                    <button className="se-mit-btn se-mit-unlabeled" onClick={() => setMitigationModal('unlabeled')}>🏷️ Fix Unlabeled ({mitCounts.unlabeled})</button>
-                    <button className="se-mit-btn se-mit-overexposed" onClick={() => setMitigationModal('overexposed')}>🔓 Fix Overexposed ({mitCounts.overexposed})</button>
-                    <button className="se-mit-btn se-mit-rot" onClick={() => setMitigationModal('rot')}>🗑️ Fix ROT ({mitCounts.rot})</button>
+                  <div className="se-folder-mit">
+                    <div className="se-fm-group">
+                      <span className="se-fm-group-label" style={{borderLeftColor:'#8b5cf6'}}>🏷️ Unlabeled ({mitCounts.unlabeled})</span>
+                      <div className="se-fm-btns">
+                        <button className="se-fm-btn" onClick={() => setMitigationModal('folder-auto-label')}>Auto-label folder</button>
+                        <button className="se-fm-btn" onClick={() => setMitigationModal('folder-ai-classify')}>AI-classify</button>
+                      </div>
+                    </div>
+                    <div className="se-fm-group">
+                      <span className="se-fm-group-label" style={{borderLeftColor:'#f97316'}}>🔓 Overexposed ({mitCounts.overexposed})</span>
+                      <div className="se-fm-btns">
+                        <button className="se-fm-btn" onClick={() => setMitigationModal('folder-restrict')}>Restrict permissions</button>
+                        <button className="se-fm-btn" onClick={() => setMitigationModal('folder-inherit')}>Inherit site perms</button>
+                      </div>
+                    </div>
+                    <div className="se-fm-group">
+                      <span className="se-fm-group-label" style={{borderLeftColor:'#eab308'}}>🗑️ ROT ({mitCounts.rot})</span>
+                      <div className="se-fm-btns">
+                        <button className="se-fm-btn" onClick={() => setMitigationModal('folder-retention')}>Retention policy</button>
+                        <button className="se-fm-btn" onClick={() => setMitigationModal('folder-flag')}>Flag for review</button>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
@@ -573,11 +707,12 @@ export default function SiteExplorer({ site, category, onClose }) {
         .se-folder-info{display:flex;align-items:center;gap:12px;margin-bottom:6px}
         .se-folder-name{font-size:13px;font-weight:700;color:#e2e8f0}
         .se-folder-count{font-size:10px;color:#64748b;background:rgba(255,255,255,0.06);padding:1px 6px;border-radius:8px}
-        .se-mit-bar{display:flex;gap:6px}
-        .se-mit-btn{font-size:10px;padding:4px 10px;border-radius:6px;border:1px solid rgba(255,255,255,0.1);cursor:pointer;font-weight:600;transition:all .15s}
-        .se-mit-unlabeled{background:rgba(239,68,68,0.1);color:#fca5a5}.se-mit-unlabeled:hover{background:rgba(239,68,68,0.25)}
-        .se-mit-overexposed{background:rgba(249,115,22,0.1);color:#fdba74}.se-mit-overexposed:hover{background:rgba(249,115,22,0.25)}
-        .se-mit-rot{background:rgba(234,179,8,0.1);color:#fde047}.se-mit-rot:hover{background:rgba(234,179,8,0.25)}
+        .se-folder-mit{display:flex;gap:6px;flex-wrap:wrap}
+        .se-fm-group{display:flex;align-items:center;gap:4px;padding:4px 8px;border-radius:6px;background:rgba(255,255,255,0.02);border-left:3px solid}
+        .se-fm-group-label{font-size:9px;font-weight:700;color:#94a3b8;white-space:nowrap}
+        .se-fm-btns{display:flex;gap:3px}
+        .se-fm-btn{font-size:9px;padding:3px 8px;border-radius:4px;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.03);color:#a0a0b8;cursor:pointer;font-family:inherit;transition:all .12s;white-space:nowrap}
+        .se-fm-btn:hover{background:rgba(99,102,241,0.1);border-color:rgba(99,102,241,0.25);color:#c4b5fd}
 
         /* ─── file table ─── */
         .se-table-section{flex:1;overflow:hidden;display:flex;flex-direction:column}
@@ -616,18 +751,33 @@ export default function SiteExplorer({ site, category, onClose }) {
 
         /* ─── mitigation modal ─── */
         .dd-mit-overlay{position:fixed;inset:0;z-index:10002;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center}
-        .dd-mit-modal{background:#1e293b;border-radius:12px;width:520px;max-height:70vh;display:flex;flex-direction:column;border:1px solid rgba(255,255,255,0.08);box-shadow:0 20px 50px rgba(0,0,0,0.5)}
+        .dd-mit-modal{background:#1e293b;border-radius:12px;width:520px;max-height:70vh;display:flex;flex-direction:column;border:1px solid rgba(255,255,255,0.08);box-shadow:0 20px 50px rgba(0,0,0,0.5);overflow:hidden}
         .dd-mit-header{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid rgba(255,255,255,0.06)}
-        .dd-mit-header h3{margin:0;font-size:14px;color:#f1f5f9}
-        .dd-mit-close{background:none;border:none;color:#94a3b8;font-size:18px;cursor:pointer}
-        .dd-mit-desc{padding:10px 18px;font-size:12px;color:#94a3b8;margin:0}
-        .dd-mit-list{flex:1;overflow:auto;padding:8px 18px}
-        .dd-mit-item{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.03);font-size:11px;color:#cbd5e1}
-        .dd-mit-actions{display:flex;gap:8px;padding:12px 18px;justify-content:flex-end;border-top:1px solid rgba(255,255,255,0.06)}
-        .dd-mit-btn-primary{padding:6px 16px;border-radius:6px;border:none;background:#3b82f6;color:#fff;font-size:12px;font-weight:600;cursor:pointer}
-        .dd-mit-btn-primary:hover{background:#2563eb}
-        .dd-mit-btn-secondary{padding:6px 16px;border-radius:6px;border:1px solid rgba(255,255,255,0.1);background:transparent;color:#94a3b8;font-size:12px;cursor:pointer}
-        .dd-mit-btn-secondary:hover{background:rgba(255,255,255,0.05)}
+        .dd-mit-header h3{font-size:14px;font-weight:600;margin:0}
+        .dd-mit-close{background:none;border:1px solid rgba(255,255,255,0.1);color:#6b6b80;width:24px;height:24px;border-radius:6px;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;transition:all .15s}
+        .dd-mit-close:hover{background:rgba(255,255,255,0.08);color:white}
+        .dd-mit-body{padding:16px 18px;overflow-y:auto}
+        .dd-mit-body p, .dd-mit-desc{font-size:12px;color:#a0a0b8;line-height:1.6;margin:0 0 14px}
+        .dd-mit-field{margin-bottom:12px}
+        .dd-mit-field label{font-size:10px;color:#6b6b80;text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:6px}
+        .dd-mit-select{display:flex;flex-direction:column;gap:4px}
+        .dd-mit-opt{padding:8px 12px;border-radius:7px;font-size:11px;font-weight:500;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);color:#c0c0d0;cursor:pointer;transition:all .15s;text-align:left;font-family:inherit}
+        .dd-mit-opt:hover{background:rgba(99,102,241,0.08);border-color:rgba(99,102,241,0.2)}
+        .dd-mit-opt-active{background:rgba(99,102,241,0.1);border-color:rgba(99,102,241,0.3);color:#a5b4fc}
+        .dd-mit-info-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;font-size:11px;color:#8888a0;border-bottom:1px solid rgba(255,255,255,0.03)}
+        .dd-mit-info-row strong{color:#e0e0f0;font-size:12px}
+        .dd-mit-steps-compact{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+        .dd-mit-step-c{display:flex;align-items:center;gap:8px;font-size:11px;color:#a0a0b8}
+        .dd-mit-step-n{width:20px;height:20px;display:flex;align-items:center;justify-content:center;background:rgba(99,102,241,0.2);color:#a5b4fc;border-radius:50%;font-size:10px;font-weight:700;flex-shrink:0}
+        .dd-mit-file-preview{margin-top:10px;padding:8px;background:rgba(255,255,255,0.02);border-radius:6px;border:1px solid rgba(255,255,255,0.04);max-height:120px;overflow-y:auto}
+        .dd-mit-file-item{font-size:10px;color:#a0a0b8;padding:3px 0;display:flex;align-items:center;gap:4px}
+        .dd-mit-file-suggest{color:#a78bfa;font-size:9px;margin-left:auto}
+        .dd-mit-file-more{font-size:9px;color:#6b6b80;padding:4px 0;font-style:italic}
+        .dd-mit-actions{display:flex;gap:8px;justify-content:flex-end;padding-top:12px;margin-top:14px;border-top:1px solid rgba(255,255,255,0.06)}
+        .dd-mit-apply{padding:8px 18px;border-radius:8px;font-size:12px;font-weight:600;background:linear-gradient(135deg,#6366f1,#8b5cf6);border:none;color:white;cursor:pointer;font-family:inherit;transition:all .15s}
+        .dd-mit-apply:hover{opacity:0.9}
+        .dd-mit-cancel{padding:8px 14px;border-radius:8px;font-size:12px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:#a0a0b8;cursor:pointer;font-family:inherit;transition:all .15s}
+        .dd-mit-cancel:hover{background:rgba(255,255,255,0.1)}
         .last-scanned { font-size: 10px; color: #4a4a60; display: inline-flex; align-items: center; gap: 4px; }
 
         /* ─── file narrative panel ─── */
