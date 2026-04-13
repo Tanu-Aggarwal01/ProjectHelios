@@ -1,0 +1,304 @@
+import React, { useState } from 'react';
+import { tiers, tierSummary, formatNumber, readinessColor, lastScannedLabel } from '../data/mockData';
+
+export default function TierView({ onSelectTier }) {
+  const [hovered, setHovered] = useState(null);
+  const [triggeringTier, setTriggeringTier] = useState(null);
+
+  const maxActivity = tiers[0].monthlyReads + tiers[0].monthlyWrites;
+
+  const handleTierClick = (tier) => {
+    if (tier.categorized) {
+      onSelectTier(tier);
+    }
+  };
+
+  const handleTriggerCategorization = (e, tier) => {
+    e.stopPropagation();
+    setTriggeringTier(tier.id);
+    // Simulate triggering categorization
+    setTimeout(() => setTriggeringTier(null), 2000);
+  };
+
+  return (
+    <div className="tier-view">
+      <div className="tier-top">
+        <div className="tier-intro">
+          <h2>Your Digital Estate</h2>
+          <p>We've identified <strong>{tierSummary.totalSites.toLocaleString()}</strong> SharePoint sites across your organization and grouped them into <strong>{tiers.length} tiers</strong> by activity level — from the most actively used down to dormant.</p>
+          <span className="last-scanned">🔄 Last scanned: {lastScannedLabel}</span>
+        </div>
+        <div className="tier-stats">
+          <div className="ts"><span className="ts-val">{tierSummary.totalSites.toLocaleString()}</span><span className="ts-lbl">SharePoint Sites</span></div>
+          <div className="ts"><span className="ts-val">{formatNumber(tierSummary.totalDocs)}</span><span className="ts-lbl">Total Documents</span></div>
+          <div className="ts"><span className="ts-val">{formatNumber(tierSummary.totalMonthlyActivity)}</span><span className="ts-lbl">Monthly Activity</span></div>
+        </div>
+      </div>
+
+      <div className="tier-body">
+        <div className="tier-list">
+          {tiers.map((tier, i) => {
+            const actRatio = (tier.monthlyReads + tier.monthlyWrites) / maxActivity;
+            const isHovered = hovered === tier.id;
+            const isTriggering = triggeringTier === tier.id;
+
+            return (
+              <div
+                key={tier.id}
+                className={`tier-block ${isHovered ? 'tier-block-hovered' : ''} ${tier.categorized ? 'tier-categorized' : 'tier-uncategorized'}`}
+                style={{
+                  '--tier-color': tier.color,
+                  '--tier-gradient-start': tier.gradient[0],
+                  '--tier-gradient-end': tier.gradient[1],
+                  animationDelay: `${i * 80}ms`,
+                }}
+                onMouseEnter={() => setHovered(tier.id)}
+                onMouseLeave={() => setHovered(null)}
+                onClick={() => handleTierClick(tier)}
+              >
+                {/* Left color accent */}
+                <div className="tier-accent" />
+
+                {/* Main content */}
+                <div className="tier-content">
+                  <div className="tier-header">
+                    <div className="tier-name-row">
+                      <span className="tier-name">{tier.name}</span>
+                      <span className="tier-label" style={{ background: tier.color + '22', color: tier.color }}>{tier.label}</span>
+                      {tier.categorized && <span className="tier-status-badge tier-status-ready">✓ Categorized</span>}
+                      {!tier.categorized && <span className="tier-status-badge tier-status-pending">Awaiting categorization</span>}
+                    </div>
+                    <p className="tier-desc">{tier.description}</p>
+                  </div>
+
+                  <div className="tier-metrics">
+                    <div className="tier-metric">
+                      <span className="tm-val">{tier.sites.toLocaleString()}</span>
+                      <span className="tm-lbl">Sites</span>
+                    </div>
+                    <div className="tier-metric">
+                      <span className="tm-val">{formatNumber(tier.totalDocs)}</span>
+                      <span className="tm-lbl">Documents</span>
+                    </div>
+                    <div className="tier-metric">
+                      <span className="tm-val">{formatNumber(tier.monthlyReads)}</span>
+                      <span className="tm-lbl">Reads/mo</span>
+                    </div>
+                    <div className="tier-metric">
+                      <span className="tm-val">{formatNumber(tier.monthlyWrites)}</span>
+                      <span className="tm-lbl">Writes/mo</span>
+                    </div>
+                    <div className="tier-readiness">
+                      <div className="tr-item">
+                        <div className="tr-bar-w"><div className="tr-bar" style={{ width: `${tier.classificationRisk}%`, background: readinessColor(tier.classificationRisk) }} /></div>
+                        <span className="tr-val" style={{ color: readinessColor(tier.classificationRisk) }}>{tier.classificationRisk}%</span>
+                        <span className="tr-lbl">Unlabeled</span>
+                      </div>
+                      <div className="tr-item">
+                        <div className="tr-bar-w"><div className="tr-bar" style={{ width: `${tier.exposureRisk}%`, background: readinessColor(tier.exposureRisk) }} /></div>
+                        <span className="tr-val" style={{ color: readinessColor(tier.exposureRisk) }}>{tier.exposureRisk}%</span>
+                        <span className="tr-lbl">Overexposed</span>
+                      </div>
+                      <div className="tr-item">
+                        <div className="tr-bar-w"><div className="tr-bar" style={{ width: `${tier.governanceRisk}%`, background: readinessColor(tier.governanceRisk) }} /></div>
+                        <span className="tr-val" style={{ color: readinessColor(tier.governanceRisk) }}>{tier.governanceRisk}%</span>
+                        <span className="tr-lbl">ROT</span>
+                      </div>
+                    </div>
+
+                  </div>
+                </div>
+
+                {/* Right action area */}
+                <div className="tier-action">
+                  {tier.categorized ? (
+                    <button className="tier-explore-btn" onClick={() => onSelectTier(tier)}>
+                      Explore Categories →
+                    </button>
+                  ) : (
+                    <button
+                      className={`tier-trigger-btn ${isTriggering ? 'triggering' : ''}`}
+                      onClick={(e) => handleTriggerCategorization(e, tier)}
+                      disabled={isTriggering}
+                    >
+                      {isTriggering ? (
+                        <><span className="trigger-spinner" /> Running…</>
+                      ) : (
+                        <>✨ Run Categorization with Security Copilot</>
+                      )}
+                    </button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Side panel — summary */}
+        <div className="tier-side">
+          <div className="tier-panel">
+            <h4>📋 Coverage Status</h4>
+            <div className="coverage-summary">
+              <div className="cov-item cov-done">
+                <span className="cov-count">{tiers.filter(t => t.categorized).length}</span>
+                <span className="cov-label">Tier categorized</span>
+              </div>
+              <div className="cov-item cov-pending">
+                <span className="cov-count">{tiers.filter(t => !t.categorized).length}</span>
+                <span className="cov-label">Tiers pending</span>
+              </div>
+            </div>
+            <p className="panel-note">The top tier has been automatically analyzed and grouped into topic categories. Trigger categorization on remaining tiers to organize their sites.</p>
+          </div>
+
+          <div className="tier-panel">
+            <h4>📊 Activity Distribution</h4>
+            {tiers.map(t => {
+              const pct = ((t.monthlyReads + t.monthlyWrites) / tierSummary.totalMonthlyActivity * 100).toFixed(1);
+              return (
+                <div key={t.id} className="dist-row">
+                  <span className="dist-dot" style={{ background: t.color }} />
+                  <span className="dist-name">{t.name.split('—')[0].trim()}</span>
+                  <div className="dist-bar-wrap">
+                    <div className="dist-bar" style={{ width: `${pct}%`, background: t.color }} />
+                  </div>
+                  <span className="dist-pct">{pct}%</span>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="tier-panel">
+            <h4>🔍 Top Sites</h4>
+            {hovered != null ? (
+              <div className="top-sites-list">
+                {tiers.find(t => t.id === hovered)?.topSites.map((s, i) => (
+                  <span key={i} className="top-site-chip">{s}</span>
+                ))}
+              </div>
+            ) : (
+              <p className="panel-hint">Hover a tier to see top sites</p>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <style>{`
+        .tier-view { height: 100%; display: flex; flex-direction: column; padding: 20px 28px 16px; overflow: hidden; }
+        .tier-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; flex-shrink: 0; }
+        .tier-intro h2 { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 4px; }
+        .tier-intro p { font-size: 13px; color: #a0a0b8; max-width: 560px; line-height: 1.5; }
+        .tier-intro strong { color: #c8c8e0; }
+        .tier-stats { display: flex; gap: 20px; }
+        .ts { text-align: center; padding: 8px 18px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; }
+        .ts-val { display: block; font-size: 20px; font-weight: 700; letter-spacing: -0.5px; }
+        .ts-lbl { font-size: 10px; color: #6b6b80; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        .tier-body { flex: 1; display: flex; gap: 20px; min-height: 0; overflow: hidden; }
+        .tier-list { flex: 1; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; min-width: 0; padding-right: 4px; }
+
+        /* Tier blocks */
+        .tier-block {
+          display: flex; align-items: stretch; border-radius: 12px;
+          background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);
+          transition: all 0.25s ease; position: relative; overflow: hidden;
+          animation: tier-slide-in 0.5s ease both;
+        }
+        @keyframes tier-slide-in {
+          from { opacity: 0; transform: translateY(12px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .tier-block-hovered {
+          background: rgba(255,255,255,0.05);
+          border-color: var(--tier-color);
+          box-shadow: 0 4px 24px rgba(0,0,0,0.3), inset 0 0 0 1px rgba(255,255,255,0.03);
+        }
+        .tier-categorized { cursor: pointer; }
+        .tier-uncategorized { cursor: default; }
+
+        .tier-accent {
+          width: 4px; flex-shrink: 0;
+          background: linear-gradient(180deg, var(--tier-gradient-start), var(--tier-gradient-end));
+          border-radius: 12px 0 0 12px;
+        }
+
+        .tier-content { flex: 1; padding: 14px 16px; min-width: 0; }
+        .tier-header { margin-bottom: 8px; }
+        .tier-name-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 3px; }
+        .tier-name { font-size: 14px; font-weight: 700; letter-spacing: -0.3px; }
+        .tier-label { font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.3px; }
+        .tier-desc { font-size: 11px; color: #8888a0; line-height: 1.4; }
+
+        .tier-status-badge { font-size: 10px; padding: 2px 8px; border-radius: 6px; font-weight: 600; }
+        .tier-status-ready { background: rgba(34,197,94,0.12); color: #22c55e; }
+        .tier-status-pending { background: rgba(255,255,255,0.06); color: #6b6b80; }
+
+        .tier-metrics { display: flex; align-items: center; gap: 16px; }
+        .tier-metric { display: flex; flex-direction: column; align-items: center; min-width: 60px; }
+        .tm-val { font-size: 15px; font-weight: 700; letter-spacing: -0.3px; }
+        .tm-lbl { font-size: 9px; color: #6b6b80; text-transform: uppercase; letter-spacing: 0.3px; }
+
+        .tier-readiness { display: flex; gap: 10px; margin-left: 8px; padding-left: 12px; border-left: 1px solid rgba(255,255,255,0.06); }
+        .tr-item { display: flex; flex-direction: column; align-items: center; min-width: 65px; }
+        .tr-bar-w { width: 100%; height: 4px; background: rgba(255,255,255,0.06); border-radius: 2px; overflow: hidden; margin-bottom: 2px; }
+        .tr-bar { height: 100%; border-radius: 2px; transition: width 0.6s ease; }
+        .tr-val { font-size: 12px; font-weight: 700; }
+        .tr-lbl { font-size: 8px; color: #6b6b80; text-transform: uppercase; letter-spacing: 0.3px; }
+
+        /* Action buttons */
+        .tier-action { display: flex; align-items: center; padding: 0 16px; flex-shrink: 0; }
+        .tier-explore-btn {
+          background: linear-gradient(135deg, rgba(99,102,241,0.15), rgba(139,92,246,0.15));
+          border: 1px solid rgba(99,102,241,0.3); color: #a5b4fc;
+          padding: 8px 16px; border-radius: 8px; font-size: 12px; font-weight: 600;
+          cursor: pointer; transition: all 0.2s; font-family: inherit; white-space: nowrap;
+        }
+        .tier-explore-btn:hover { background: linear-gradient(135deg, rgba(99,102,241,0.25), rgba(139,92,246,0.25)); border-color: #8b5cf6; color: white; }
+
+        .tier-trigger-btn {
+          background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1);
+          color: #a0a0b8; padding: 8px 16px; border-radius: 8px; font-size: 12px;
+          font-weight: 500; cursor: pointer; transition: all 0.2s; font-family: inherit; white-space: nowrap;
+          display: flex; align-items: center; gap: 6px;
+        }
+        .tier-trigger-btn:hover:not(:disabled) { background: rgba(99,102,241,0.1); border-color: rgba(99,102,241,0.3); color: #c8c8e0; }
+        .tier-trigger-btn:disabled { opacity: 0.7; cursor: default; }
+        .tier-trigger-btn.triggering { color: #8b5cf6; border-color: rgba(139,92,246,0.3); }
+
+        .trigger-spinner {
+          display: inline-block; width: 12px; height: 12px;
+          border: 2px solid rgba(139,92,246,0.3); border-top-color: #8b5cf6;
+          border-radius: 50%; animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Side panel */
+        .tier-side { width: 280px; flex-shrink: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
+        .tier-panel { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 14px; }
+        .tier-panel h4 { font-size: 12px; font-weight: 600; margin-bottom: 10px; }
+
+        .coverage-summary { display: flex; gap: 10px; margin-bottom: 10px; }
+        .cov-item { flex: 1; text-align: center; padding: 10px 8px; border-radius: 8px; }
+        .cov-done { background: rgba(34,197,94,0.08); border: 1px solid rgba(34,197,94,0.15); }
+        .cov-pending { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); }
+        .cov-count { display: block; font-size: 22px; font-weight: 700; }
+        .cov-done .cov-count { color: #22c55e; }
+        .cov-pending .cov-count { color: #6b6b80; }
+        .cov-label { font-size: 9px; color: #6b6b80; text-transform: uppercase; letter-spacing: 0.3px; }
+        .panel-note { font-size: 11px; color: #6b6b80; line-height: 1.5; }
+
+        .dist-row { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+        .dist-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+        .dist-name { font-size: 10px; color: #a0a0b8; width: 45px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .dist-bar-wrap { flex: 1; height: 4px; background: rgba(255,255,255,0.06); border-radius: 2px; overflow: hidden; }
+        .dist-bar { height: 100%; border-radius: 2px; transition: width 0.8s ease; }
+        .dist-pct { font-size: 10px; color: #6b6b80; width: 36px; text-align: right; }
+
+        .top-sites-list { display: flex; flex-wrap: wrap; gap: 4px; }
+        .top-site-chip { font-size: 10px; padding: 3px 8px; background: rgba(99,102,241,0.1); border-radius: 4px; color: #b0b0d0; }
+        .panel-hint { font-size: 11px; color: #4a4a60; font-style: italic; }
+        .last-scanned { font-size: 10px; color: #4a4a60; display: inline-flex; align-items: center; gap: 4px; }
+      `}</style>
+    </div>
+  );
+}
