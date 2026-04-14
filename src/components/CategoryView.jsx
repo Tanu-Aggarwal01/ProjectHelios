@@ -126,23 +126,23 @@ function CategoryDeepDive({ category, onClose }) {
                   </div>
                 </div>
 
-                {/* Data State Risks */}
+                {/* Data Readiness */}
                 <div className="dd-section">
-                  <h4>🎯 Data State</h4>
+                  <h4>🎯 Data Readiness</h4>
                   <div className="dd-readiness-list">
-                    <div className="dd-rd"><span className="dd-rd-lbl">🏷️ Unlabeled</span><div className="dd-rd-bar-w"><div className="dd-rd-bar" style={{width:`${selectedSite.classificationRisk}%`,background:readinessColor(selectedSite.classificationRisk)}}/></div><span className="dd-rd-v" style={{color:readinessColor(selectedSite.classificationRisk)}}>{selectedSite.classificationRisk}%</span></div>
-                    <div className="dd-rd"><span className="dd-rd-lbl">🔓 Overexposed</span><div className="dd-rd-bar-w"><div className="dd-rd-bar" style={{width:`${selectedSite.exposureRisk}%`,background:readinessColor(selectedSite.exposureRisk)}}/></div><span className="dd-rd-v" style={{color:readinessColor(selectedSite.exposureRisk)}}>{selectedSite.exposureRisk}%</span></div>
-                    <div className="dd-rd"><span className="dd-rd-lbl">🗑️ ROT</span><div className="dd-rd-bar-w"><div className="dd-rd-bar" style={{width:`${selectedSite.governanceRisk}%`,background:readinessColor(selectedSite.governanceRisk)}}/></div><span className="dd-rd-v" style={{color:readinessColor(selectedSite.governanceRisk)}}>{selectedSite.governanceRisk}%</span></div>
+                    <div className="dd-rd dd-rd-tip"><span className="dd-rd-lbl">🏷️ Unlabeled</span><div className="dd-rd-bar-w"><div className="dd-rd-bar" style={{width:`${selectedSite.classificationRisk}%`,background:readinessColor(selectedSite.classificationRisk)}}/></div><span className="dd-rd-v" style={{color:readinessColor(selectedSite.classificationRisk)}}>{selectedSite.classificationRisk}%</span><div className="dd-rd-tooltip">Content without sensitivity labels cannot be protected by DLP policies — Copilot and AI agents can freely access and share this data without controls.</div></div>
+                    <div className="dd-rd dd-rd-tip"><span className="dd-rd-lbl">🔓 Overexposed</span><div className="dd-rd-bar-w"><div className="dd-rd-bar" style={{width:`${selectedSite.exposureRisk}%`,background:readinessColor(selectedSite.exposureRisk)}}/></div><span className="dd-rd-v" style={{color:readinessColor(selectedSite.exposureRisk)}}>{selectedSite.exposureRisk}%</span><div className="dd-rd-tooltip">Files with broad permissions are visible to Copilot for every user who has access — oversharing amplifies AI exposure across the organization.</div></div>
+                    <div className="dd-rd dd-rd-tip"><span className="dd-rd-lbl">🗑️ ROT</span><div className="dd-rd-bar-w"><div className="dd-rd-bar" style={{width:`${selectedSite.governanceRisk}%`,background:readinessColor(selectedSite.governanceRisk)}}/></div><span className="dd-rd-v" style={{color:readinessColor(selectedSite.governanceRisk)}}>{selectedSite.governanceRisk}%</span><div className="dd-rd-tooltip">Stale content pollutes AI responses with outdated information and increases attack surface — Copilot doesn't know a file is obsolete.</div></div>
                   </div>
                 </div>
 
-                {/* Data Activity Risks */}
+                {/* Active Risks */}
                 <div className="dd-section">
-                  <h4>📊 Data Activity</h4>
+                  <h4>📊 Active Risks</h4>
                   <div className="dd-readiness-list">
-                    <div className="dd-rd"><span className="dd-rd-lbl">📤 Exfiltration</span><div className="dd-rd-bar-w"><div className="dd-rd-bar" style={{width:`${selectedSite.activityRisk}%`,background:readinessColor(selectedSite.activityRisk)}}/></div><span className="dd-rd-v" style={{color:readinessColor(selectedSite.activityRisk)}}>{selectedSite.activityRisk}%</span></div>
-                    <div className="dd-rd"><span className="dd-rd-lbl">👤 User Risk</span><div className="dd-rd-bar-w"><div className="dd-rd-bar" style={{width:`${selectedSite.userRisk}%`,background:readinessColor(selectedSite.userRisk)}}/></div><span className="dd-rd-v" style={{color:readinessColor(selectedSite.userRisk)}}>{selectedSite.userRisk}%</span></div>
-                    <div className="dd-rd"><span className="dd-rd-lbl">🤖 AI & Agent</span><div className="dd-rd-bar-w"><div className="dd-rd-bar" style={{width:`${selectedSite.aiAgentRisk}%`,background:readinessColor(selectedSite.aiAgentRisk)}}/></div><span className="dd-rd-v" style={{color:readinessColor(selectedSite.aiAgentRisk)}}>{selectedSite.aiAgentRisk}%</span></div>
+                    <div className="dd-rd dd-rd-tip"><span className="dd-rd-lbl">📤 Exfiltration</span><div className="dd-rd-bar-w"><div className="dd-rd-bar" style={{width:`${selectedSite.activityRisk}%`,background:readinessColor(selectedSite.activityRisk)}}/></div><span className="dd-rd-v" style={{color:readinessColor(selectedSite.activityRisk)}}>{selectedSite.activityRisk}%</span><div className="dd-rd-tooltip">Percentage of sensitive data activity (downloads, external shares, USB copies, cloud uploads) not covered by an active DLP policy — this data movement is unmonitored.</div></div>
+                    <div className="dd-rd dd-rd-tip"><span className="dd-rd-lbl">👤 User Risk</span><div className="dd-rd-bar-w"><div className="dd-rd-bar" style={{width:`${selectedSite.userRisk}%`,background:readinessColor(selectedSite.userRisk)}}/></div><span className="dd-rd-v" style={{color:readinessColor(selectedSite.userRisk)}}>{selectedSite.userRisk}%</span><div className="dd-rd-tooltip">Percentage of users with access to this site not covered by Insider Risk Management policies — risky behavior by these users would go undetected.</div></div>
+                    <div className="dd-rd dd-rd-tip"><span className="dd-rd-lbl">🤖 AI & Agent</span><div className="dd-rd-bar-w"><div className="dd-rd-bar" style={{width:`${selectedSite.aiAgentRisk}%`,background:readinessColor(selectedSite.aiAgentRisk)}}/></div><span className="dd-rd-v" style={{color:readinessColor(selectedSite.aiAgentRisk)}}>{selectedSite.aiAgentRisk}%</span><div className="dd-rd-tooltip">Percentage of content accessed by Copilot or AI agents not protected by DLP controls — AI can freely process and surface this data in responses.</div></div>
                   </div>
                 </div>
 
@@ -157,11 +157,11 @@ function CategoryDeepDive({ category, onClose }) {
                   </div>
                 </div>
 
-                {/* Remediate Data State (collapsible) */}
+                {/* Improve Data Readiness (collapsible) */}
                 <div className="dd-section">
                   <div className="dd-collapse-header" onClick={() => setShowStateActions(!showStateActions)}>
                     <span className="dd-collapse-arrow">{showStateActions ? '▾' : '▸'}</span>
-                    <h4>Remediate Data State</h4>
+                    <h4>Improve Data Readiness</h4>
                     <span className="dd-collapse-hint">Label, permissions & retention actions</span>
                   </div>
                   {showStateActions && (
@@ -203,11 +203,11 @@ function CategoryDeepDive({ category, onClose }) {
                   )}
                 </div>
 
-                {/* Remediate Data Activity (collapsible) */}
+                {/* Mitigate Active Risks (collapsible) */}
                 <div className="dd-section">
                   <div className="dd-collapse-header" onClick={() => setShowActivityActions(!showActivityActions)}>
                     <span className="dd-collapse-arrow">{showActivityActions ? '▾' : '▸'}</span>
-                    <h4>Remediate Data Activity</h4>
+                    <h4>Mitigate Active Risks</h4>
                     <span className="dd-collapse-hint">DLP, IRM & AI protection actions</span>
                   </div>
                   {showActivityActions && (
@@ -705,6 +705,9 @@ function CategoryDeepDive({ category, onClose }) {
       .dd-rd-bar-w { flex:1; height:5px; background:rgba(255,255,255,0.06); border-radius:3px; overflow:hidden; }
       .dd-rd-bar { height:100%; border-radius:3px; transition:width .5s ease; }
       .dd-rd-v { font-size:11px; font-weight:700; min-width:32px; text-align:right; }
+      .dd-rd-tip{position:relative;cursor:help}
+      .dd-rd-tooltip{display:none;position:absolute;left:0;bottom:calc(100% + 6px);width:260px;padding:8px 12px;border-radius:7px;background:rgba(10,10,25,0.97);border:1px solid rgba(99,102,241,0.25);box-shadow:0 6px 20px rgba(0,0,0,0.5);font-size:10px;color:#c0c0d8;line-height:1.5;z-index:100;pointer-events:none}
+      .dd-rd-tip:hover .dd-rd-tooltip{display:block}
 
       .dd-narrative{padding:10px 12px;border-radius:8px;background:linear-gradient(135deg,rgba(99,102,241,0.04),rgba(139,92,246,0.03));border:1px solid rgba(99,102,241,0.1)}
       .dd-narrative-header{display:flex;align-items:center;gap:5px;margin-bottom:6px}
@@ -1390,3 +1393,4 @@ export default function CategoryView({ tier, onSelectCategory, onOpenTopicGraph 
     </div>
   );
 }
+
