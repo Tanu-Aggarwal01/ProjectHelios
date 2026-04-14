@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { tiers, tierSummary, formatNumber, readinessColor, lastScannedLabel } from '../data/mockData';
+import { tiers, tierSummary, formatNumber, readinessColor, lastScannedLabel, getCategoriesForTier } from '../data/mockData';
 
 const platformData = [
   {
@@ -42,6 +42,12 @@ export default function HomePage({ onNavigateToTiers }) {
   const [protectionModal, setProtectionModal] = useState(null);
 
   const tier1 = tiers[0];
+  const tier1Cats = getCategoriesForTier(1);
+  const totalSitsMatched = tier1Cats.reduce((s, c) => s + c.sitsMatched, 0);
+  const totalSitsAccurate = tier1Cats.reduce((s, c) => s + c.sitsAccurate, 0);
+  const totalSitsUpgraded = tier1Cats.reduce((s, c) => s + c.sitsUpgraded, 0);
+  const avgConfBefore = Math.round(tier1Cats.reduce((s, c) => s + c.avgConfidenceBefore, 0) / tier1Cats.length);
+  const avgConfAfter = Math.round(tier1Cats.reduce((s, c) => s + c.avgConfidenceAfter, 0) / tier1Cats.length);
 
   return (
     <div className="home-page">
@@ -118,6 +124,35 @@ export default function HomePage({ onNavigateToTiers }) {
                   </div>
                 </div>
 
+                <div className="hp-aiclass-summary" onClick={() => setProtectionModal('ai-classification')}>
+                  <div className="hp-aiclass-top">
+                    <span className="hp-aiclass-icon">✨</span>
+                    <div>
+                      <strong>AI-Native Classification</strong>
+                      <span className="hp-aiclass-sub">We graded {totalSitsMatched} classifiers across {tier1Cats.length} categories</span>
+                    </div>
+                    <span className="hp-lc-arrow">→</span>
+                  </div>
+                  <div className="hp-aiclass-results">
+                    <div className="hp-aiclass-result">
+                      <span className="hp-aiclass-result-val">{totalSitsAccurate}</span>
+                      <span className="hp-aiclass-result-lbl">✅ Accurate</span>
+                    </div>
+                    <div className="hp-aiclass-result">
+                      <span className="hp-aiclass-result-val">{totalSitsUpgraded}</span>
+                      <span className="hp-aiclass-result-lbl">⚡ → SmartSIT</span>
+                    </div>
+                    <div className="hp-aiclass-result">
+                      <span className="hp-aiclass-result-val hp-aiclass-before">{avgConfBefore}%</span>
+                      <span className="hp-aiclass-result-lbl">Before</span>
+                    </div>
+                    <div className="hp-aiclass-result">
+                      <span className="hp-aiclass-result-val hp-aiclass-after">{avgConfAfter}%</span>
+                      <span className="hp-aiclass-result-lbl">After</span>
+                    </div>
+                  </div>
+                </div>
+
                 <div className="hp-lane-risks">
                   <div className="hp-lane-risk-row hp-has-tooltip">
                     <span className="hp-lane-risk-icon">🏷️</span>
@@ -140,21 +175,6 @@ export default function HomePage({ onNavigateToTiers }) {
                     <span className="hp-lane-risk-val" style={{ color: readinessColor(tier1.governanceRisk) }}>{tier1.governanceRisk}%</span>
                     <div className="hp-risk-tooltip">Stale content pollutes AI responses with outdated information and increases your attack surface — Copilot doesn't know a file is obsolete.</div>
                   </div>
-                </div>
-
-                <div className="hp-ai-class-callout" onClick={() => setProtectionModal('ai-classification')}>
-                  <div className="hp-ai-class-header">
-                    <span className="hp-ai-class-badge">✨ NEW</span>
-                    <span className="hp-ai-class-title">AI-Native Classification</span>
-                    <span className="hp-lc-arrow" style={{marginLeft:'auto'}}>→</span>
-                  </div>
-                  <div className="hp-lane-risk-row hp-ai-class-row">
-                    <span className="hp-lane-risk-icon">🎯</span>
-                    <span className="hp-lane-risk-label">AI-Classified</span>
-                    <div className="hp-lane-risk-bar"><div style={{ width: '43%', background: '#8b5cf6' }} /></div>
-                    <span className="hp-lane-risk-val" style={{ color: '#8b5cf6' }}>43%</span>
-                  </div>
-                  <p className="hp-ai-class-note">of labeled content uses high-accuracy classification</p>
                 </div>
 
                 <button className="hp-lane-cta" onClick={onNavigateToTiers}>
@@ -505,27 +525,26 @@ export default function HomePage({ onNavigateToTiers }) {
         }
         .hp-has-tooltip:hover .hp-risk-tooltip { display: block; }
 
-        /* AI-Native Classification callout */
-        .hp-ai-class-callout {
-          margin-top: 12px; padding: 10px 12px; border-radius: 8px;
-          background: rgba(139,92,246,0.04);
-          border: 1px dashed rgba(139,92,246,0.2);
-          cursor: pointer; transition: all .15s;
+        /* AI-Native Classification summary */
+        .hp-aiclass-summary {
+          margin-bottom: 12px; padding: 12px 14px; border-radius: 10px;
+          background: linear-gradient(135deg, rgba(139,92,246,0.08), rgba(99,102,241,0.04));
+          border: 1px solid rgba(139,92,246,0.2); cursor: pointer; transition: all .15s;
         }
-        .hp-ai-class-callout:hover {
-          background: rgba(139,92,246,0.08); border-color: rgba(139,92,246,0.35);
+        .hp-aiclass-summary:hover { background: linear-gradient(135deg, rgba(139,92,246,0.12), rgba(99,102,241,0.06)); border-color: rgba(139,92,246,0.35); }
+        .hp-aiclass-top { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+        .hp-aiclass-icon { font-size: 18px; }
+        .hp-aiclass-top strong { font-size: 12px; color: #c4b5fd; display: block; }
+        .hp-aiclass-sub { font-size: 10px; color: #8888a0; }
+        .hp-aiclass-results { display: flex; gap: 6px; }
+        .hp-aiclass-result {
+          flex: 1; text-align: center; padding: 6px 4px; border-radius: 6px;
+          background: rgba(255,255,255,0.03);
         }
-        .hp-ai-class-header { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
-        .hp-ai-class-badge {
-          font-size: 8px; font-weight: 700; color: #a78bfa;
-          background: rgba(139,92,246,0.15); padding: 2px 6px; border-radius: 4px;
-          text-transform: uppercase; letter-spacing: 0.5px;
-        }
-        .hp-ai-class-title { font-size: 11px; font-weight: 600; color: #c4b5fd; }
-        .hp-ai-class-row { margin-bottom: 2px; }
-        .hp-ai-class-note {
-          font-size: 9px; color: #6b6b80; margin: 0; padding-left: 26px; font-style: italic;
-        }
+        .hp-aiclass-result-val { display: block; font-size: 16px; font-weight: 800; color: #e0e0ff; }
+        .hp-aiclass-result-lbl { font-size: 8px; color: #6b6b80; text-transform: uppercase; letter-spacing: 0.3px; }
+        .hp-aiclass-before { color: #f97316 !important; }
+        .hp-aiclass-after { color: #22c55e !important; }
 
         /* Lane 2: control cards with status chips */
         .hp-lane-controls { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; flex: 1; }

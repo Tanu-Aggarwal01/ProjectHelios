@@ -139,6 +139,7 @@ export function getCategoriesForTier(tierId) {
     5: { cl: [78,86,80,74,84,72,82,76,78,82], ex: [16,22,14,12,24,10,20,14,16,18], gv: [72,82,74,68,84,66,78,70,75,80] },
   };
   const tr = tierRisks[tierId] || tierRisks[3];
+  const catRand = seededRandom(tierId * 7919 + 31);
   const tierSecurity = {
     1: { dlp: [78,68,82,55,75,48,85,52,58,72], irm: [70,62,58,45,72,40,68,48,52,60] },
     2: { dlp: [62,52,68,42,58,35,72,40,45,55], irm: [52,44,48,35,55,30,52,38,42,48] },
@@ -147,19 +148,31 @@ export function getCategoriesForTier(tierId) {
     5: { dlp: [15,10,18,8,14,6,20,10,12,15], irm: [10,6,8,4,12,4,10,6,8,8] },
   };
   const ts = tierSecurity[tierId] || tierSecurity[3];
-  return categories.map((cat, i) => ({
-    ...cat,
-    documentCount: dist[i],
-    siteCount: Math.round(dist[i] / (800 + i * 200)),
-    overexposed: Math.round(dist[i] * (tr.ex[i] / 100)),
-    classificationRisk: tr.cl[i],
-    exposureRisk: tr.ex[i],
-    governanceRisk: tr.gv[i],
-    dlpCoverage: ts.dlp[i],
-    dlpBreakdown: (() => { const dlpVal = ts.dlp[i]; const dlpBlock = Math.round(dlpVal * 0.28); const dlpWarn = Math.round(dlpVal * 0.32); const dlpAudit = Math.round(dlpVal * 0.25); const dlpSim = dlpVal - dlpBlock - dlpWarn - dlpAudit; return { block: dlpBlock, warn: dlpWarn, audit: dlpAudit, simulation: dlpSim }; })(),
-    irmCoverage: ts.irm[i],
-    irmSignals: Math.round(ts.irm[i] * 0.3),
-  }));
+  return categories.map((cat, i) => {
+    const sitsMatched = 25 + Math.round(catRand() * 20);
+    const avgConfBefore = 55 + Math.round(catRand() * 25);
+    const avgConfAfter = 88 + Math.round(catRand() * 10);
+    const sitsUpgraded = Math.round(sitsMatched * (0.2 + catRand() * 0.3));
+    const sitsAccurate = sitsMatched - sitsUpgraded;
+    return {
+      ...cat,
+      documentCount: dist[i],
+      siteCount: Math.round(dist[i] / (800 + i * 200)),
+      overexposed: Math.round(dist[i] * (tr.ex[i] / 100)),
+      classificationRisk: tr.cl[i],
+      exposureRisk: tr.ex[i],
+      governanceRisk: tr.gv[i],
+      dlpCoverage: ts.dlp[i],
+      dlpBreakdown: (() => { const dlpVal = ts.dlp[i]; const dlpBlock = Math.round(dlpVal * 0.28); const dlpWarn = Math.round(dlpVal * 0.32); const dlpAudit = Math.round(dlpVal * 0.25); const dlpSim = dlpVal - dlpBlock - dlpWarn - dlpAudit; return { block: dlpBlock, warn: dlpWarn, audit: dlpAudit, simulation: dlpSim }; })(),
+      irmCoverage: ts.irm[i],
+      irmSignals: Math.round(ts.irm[i] * 0.3),
+      sitsMatched,
+      sitsAccurate,
+      sitsUpgraded,
+      avgConfidenceBefore: avgConfBefore,
+      avgConfidenceAfter: avgConfAfter,
+    };
+  });
 }
 
 // ──────────────────────────────────────────
@@ -740,7 +753,12 @@ export function getFilesForFolder(folderId) {
     const exposureIdx = Math.floor(rand() * exposureTypes.length);
     const exposure = exposureTypes[exposureIdx];
     const mipLabel = mipLabelOptions[Math.floor(rand() * mipLabelOptions.length)];
-    const classifications = classifierOptions[Math.floor(rand() * classifierOptions.length)];
+    const classifierNames = classifierOptions[Math.floor(rand() * classifierOptions.length)];
+    const classifications = classifierNames.map(name => ({
+      name,
+      isSmartSIT: rand() > 0.6,
+      confidence: Math.round(75 + rand() * 24),
+    }));
     const owner = userPool[Math.floor(rand() * userPool.length)];
 
     const now = Date.now();

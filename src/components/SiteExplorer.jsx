@@ -425,7 +425,11 @@ export default function SiteExplorer({ site, category, onClose }) {
                             <td>{f.accessedUsers30d}</td>
                             <td><span className="se-exp-badge" style={exposureStyle(f.exposure)}>{f.exposure}</span></td>
                             <td>{f.mipLabel ? <span className="se-label-badge">{f.mipLabel}</span> : <span className="se-muted">—</span>}</td>
-                            <td>{f.classifications && f.classifications.length > 0 ? f.classifications.map((c, i) => <span key={i} className="se-class-chip">{c}</span>) : <span className="se-muted">—</span>}</td>
+                            <td>{f.classifications && f.classifications.length > 0 ? f.classifications.map((c, i) => (
+  <span key={i} className={`se-class-chip ${c.isSmartSIT ? 'se-class-smart' : ''}`} title={c.isSmartSIT ? `SmartSIT — ${c.confidence}% confidence` : `SIT — ${c.confidence}% confidence`}>
+    {c.name}{c.isSmartSIT && ' ✨'}
+  </span>
+)) : <span className="se-muted">—</span>}</td>
                             <td><span className={`se-cat-badge ${f.category === 'Unknown' ? 'se-cat-unknown' : ''}`}>{f.category}</span></td>
                             <td className="se-date">{compactDate(f.createdDate)}</td>
                             <td className="se-date">{compactDate(f.lastAccessed)}</td>
@@ -740,6 +744,7 @@ export default function SiteExplorer({ site, category, onClose }) {
 
         /* classification chips */
         .se-class-chip{font-size:8px;padding:1px 5px;border-radius:3px;background:rgba(234,179,8,0.12);color:#fde047;margin-right:3px;white-space:nowrap}
+        .se-class-smart{background:rgba(139,92,246,0.15)!important;color:#c4b5fd!important;border:1px solid rgba(139,92,246,0.2)}
 
         /* category badge */
         .se-cat-badge{font-size:9px;padding:2px 6px;border-radius:4px;background:rgba(99,102,241,0.12);color:#a5b4fc;white-space:nowrap}

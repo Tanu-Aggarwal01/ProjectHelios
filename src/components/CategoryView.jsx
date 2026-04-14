@@ -1078,6 +1078,28 @@ export default function CategoryView({ tier, onSelectCategory, onOpenTopicGraph 
                 </div>
               </div>
 
+              <div className="cd-aiclass-card">
+                <div className="cd-aiclass-header">
+                  <span className="cd-aiclass-badge">✨ AI-Native Classification</span>
+                </div>
+                <div className="cd-aiclass-stats">
+                  <span className="cd-aiclass-stat"><strong>{selectedCat.sitsMatched}</strong> SITs matched</span>
+                  <span className="cd-aiclass-stat cd-aiclass-ok">✅ {selectedCat.sitsAccurate} accurate</span>
+                  <span className="cd-aiclass-stat cd-aiclass-up">⚡ {selectedCat.sitsUpgraded} → SmartSIT</span>
+                </div>
+                <div className="cd-aiclass-bars">
+                  <div className="cd-aiclass-bar-row">
+                    <span className="cd-aiclass-bar-lbl">Before</span>
+                    <div className="cd-aiclass-bar-w"><div className="cd-aiclass-bar" style={{width:`${selectedCat.avgConfidenceBefore}%`,background:'#f97316'}}/></div>
+                    <span className="cd-aiclass-bar-v" style={{color:'#f97316'}}>{selectedCat.avgConfidenceBefore}%</span>
+                  </div>
+                  <div className="cd-aiclass-bar-row">
+                    <span className="cd-aiclass-bar-lbl">After</span>
+                    <div className="cd-aiclass-bar-w"><div className="cd-aiclass-bar" style={{width:`${selectedCat.avgConfidenceAfter}%`,background:'#22c55e'}}/></div>
+                    <span className="cd-aiclass-bar-v" style={{color:'#22c55e'}}>{selectedCat.avgConfidenceAfter}%</span>
+                  </div>
+                </div>
+              </div>
 
 
               <div className="cd-narrative">
@@ -1257,6 +1279,21 @@ export default function CategoryView({ tier, onSelectCategory, onOpenTopicGraph 
         .cd-ri-v { font-size:10px; font-weight:700; min-width:30px; text-align:right; }
         .cd-ri-action{font-size:8px;padding:2px 8px;border-radius:4px;border:1px solid rgba(99,102,241,0.2);background:rgba(99,102,241,0.06);color:#a5b4fc;cursor:pointer;font-family:inherit;transition:all .12s;white-space:nowrap;margin-left:4px;flex-shrink:0}
         .cd-ri-action:hover{background:rgba(99,102,241,0.15);border-color:rgba(99,102,241,0.4);color:white}
+
+        .cd-aiclass-card{margin-bottom:10px;padding:10px 12px;border-radius:8px;background:rgba(139,92,246,0.04);border:1px dashed rgba(139,92,246,0.2)}
+        .cd-aiclass-header{margin-bottom:6px}
+        .cd-aiclass-badge{font-size:9px;font-weight:700;color:#a78bfa;text-transform:uppercase;letter-spacing:0.4px}
+        .cd-aiclass-stats{display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+        .cd-aiclass-stat{font-size:10px;color:#8888a0}
+        .cd-aiclass-stat strong{color:#e0e0f0}
+        .cd-aiclass-ok{color:#22c55e}
+        .cd-aiclass-up{color:#a78bfa}
+        .cd-aiclass-bars{display:flex;flex-direction:column;gap:4px}
+        .cd-aiclass-bar-row{display:flex;align-items:center;gap:6px}
+        .cd-aiclass-bar-lbl{font-size:9px;color:#6b6b80;width:40px}
+        .cd-aiclass-bar-w{flex:1;height:4px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden}
+        .cd-aiclass-bar{height:100%;border-radius:2px;transition:width .5s ease}
+        .cd-aiclass-bar-v{font-size:10px;font-weight:700;min-width:28px;text-align:right}
 
         .cd-qa-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(8px);z-index:1000;display:flex;align-items:center;justify-content:center;animation:cdQaIn .15s ease}
         @keyframes cdQaIn{from{opacity:0}to{opacity:1}}
