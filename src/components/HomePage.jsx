@@ -37,7 +37,7 @@ function PlatformIcon({ item }) {
   return <span style={{ color: item.iconColor, fontSize: 13 }}>{item.iconChar}</span>;
 }
 
-export default function HomePage({ onNavigateToTiers }) {
+export default function HomePage({ onNavigateToWorkloads }) {
   const [selectedPlatform, setSelectedPlatform] = useState('Microsoft Fabric');
   const [protectionModal, setProtectionModal] = useState(null);
 
@@ -177,7 +177,7 @@ export default function HomePage({ onNavigateToTiers }) {
                   </div>
                 </div>
 
-                <button className="hp-lane-cta" onClick={onNavigateToTiers}>
+                <button className="hp-lane-cta" onClick={onNavigateToWorkloads}>
                   Explore Your Data Estate →
                 </button>
               </div>

@@ -1,4 +1,85 @@
 // ──────────────────────────────────────────
+// WORKLOADS — M365 workloads overview
+// ──────────────────────────────────────────
+export const workloads = [
+  {
+    id: 'sharepoint',
+    name: 'SharePoint',
+    icon: '🟢',
+    color: '#038387',
+    gradient: ['#03a5a9', '#026d70'],
+    totalItems: 66_950_000,
+    unlabeled: 22_363_000,
+    unlabeledPct: 33,
+    overExposed: 14_729_000,
+    overExposedPct: 22,
+    staleData: 26_780_000,
+    stalePct: 40,
+    sites: 100_000,
+    explorable: true,
+    description: 'Sites, document libraries, and lists across your organization.',
+  },
+  {
+    id: 'onedrive',
+    name: 'OneDrive',
+    icon: '☁️',
+    color: '#0078d4',
+    gradient: ['#2899f5', '#005a9e'],
+    totalItems: 42_800_000,
+    unlabeled: 29_960_000,
+    unlabeledPct: 70,
+    overExposed: 6_420_000,
+    overExposedPct: 15,
+    staleData: 17_120_000,
+    stalePct: 40,
+    sites: 85_000,
+    explorable: false,
+    description: 'Personal storage for every user in the organization.',
+  },
+  {
+    id: 'exchange',
+    name: 'Exchange',
+    icon: '📧',
+    color: '#0072c6',
+    gradient: ['#2b88d8', '#004578'],
+    totalItems: 128_500_000,
+    unlabeled: 103_785_000,
+    unlabeledPct: 81,
+    overExposed: 5_140_000,
+    overExposedPct: 4,
+    staleData: 51_400_000,
+    stalePct: 40,
+    sites: 92_000,
+    explorable: false,
+    description: 'Email, calendars, and mailbox data across all users.',
+  },
+  {
+    id: 'teams',
+    name: 'Teams',
+    icon: '💬',
+    color: '#6264a7',
+    gradient: ['#7b83eb', '#464775'],
+    totalItems: 18_200_000,
+    unlabeled: 12_740_000,
+    unlabeledPct: 70,
+    overExposed: 4_550_000,
+    overExposedPct: 25,
+    staleData: 3_640_000,
+    stalePct: 20,
+    sites: 12_400,
+    explorable: false,
+    description: 'Chats, channels, files, and meeting recordings.',
+  },
+];
+
+export const workloadSummary = {
+  totalItems: workloads.reduce((s, w) => s + w.totalItems, 0),
+  totalUnlabeled: workloads.reduce((s, w) => s + w.unlabeled, 0),
+  totalOverExposed: workloads.reduce((s, w) => s + w.overExposed, 0),
+  totalStale: workloads.reduce((s, w) => s + w.staleData, 0),
+};
+
+// ──────────────────────────────────────────
 // TIERS — SharePoint sites grouped by activity
 // ──────────────────────────────────────────
 export const tiers = [

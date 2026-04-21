@@ -1,15 +1,16 @@
 import React, { useState, useCallback } from 'react';
 import HomePage from './components/HomePage';
+import WorkloadOverview from './components/WorkloadOverview';
 import TierView from './components/TierView';
 import CategoryView from './components/CategoryView';
 import SubcategoryView from './components/SubcategoryView';
 import FileGraph from './components/FileGraph';
 import TopicGraph from './components/TopicGraph';
 
-const views = { HOME: 'home', TIERS: 'tiers', CATEGORIES: 'categories', SUBCATEGORIES: 'subcategories', FILE_GRAPH: 'file-graph', TOPIC_GRAPH: 'topic-graph' };
+const views = { HOME: 'home', WORKLOADS: 'workloads', TIERS: 'tiers', CATEGORIES: 'categories', SUBCATEGORIES: 'subcategories', FILE_GRAPH: 'file-graph', TOPIC_GRAPH: 'topic-graph' };
 
 export default function App() {
-  const [nav, setNav] = useState({ view: views.HOME, tier: null, category: null, subcategory: null, file: null, topicLabel: null });
+  const [nav, setNav] = useState({ view: views.HOME, workload: null, tier: null, category: null, subcategory: null, file: null, topicLabel: null });
   const [transitioning, setTransitioning] = useState(false);
 
   const go = useCallback((next) => {
@@ -20,18 +21,20 @@ export default function App() {
     }, 300);
   }, []);
 
-  const goHome           = ()       => go({ view: views.HOME, tier: null, category: null, subcategory: null, file: null, topicLabel: null });
+  const goHome           = ()       => go({ view: views.HOME, workload: null, tier: null, category: null, subcategory: null, file: null, topicLabel: null });
 
   const breadcrumbs = [];
   if (nav.view !== views.HOME) breadcrumbs.push({ label: 'Home', onClick: goHome });
-  if (nav.view !== views.HOME && nav.view !== views.TIERS) breadcrumbs.push({ label: 'All Tiers', onClick: () => go({ view: views.TIERS, tier: null, category: null, subcategory: null, file: null, topicLabel: null }) });
+  if (nav.view !== views.HOME && nav.view !== views.WORKLOADS) breadcrumbs.push({ label: 'Microsoft 365', onClick: () => go({ view: views.WORKLOADS, workload: null, tier: null, category: null, subcategory: null, file: null, topicLabel: null }) });
+  if (nav.workload && nav.view !== views.WORKLOADS) breadcrumbs.push({ label: nav.workload.name, onClick: () => go({ view: views.TIERS, tier: null, category: null, subcategory: null, file: null, topicLabel: null }) });
   if (nav.tier) breadcrumbs.push({ label: nav.tier.name, onClick: () => go({ view: views.CATEGORIES, category: null, subcategory: null, file: null }) });
   if (nav.category) breadcrumbs.push({ label: nav.category.name, onClick: () => go({ view: views.SUBCATEGORIES, subcategory: null, file: null }) });
   if (nav.subcategory) breadcrumbs.push({ label: nav.subcategory.name });
   if (nav.file) breadcrumbs.push({ label: nav.file.name });
 
+  const selectWorkload   = (wl)     => go({ view: views.TIERS, workload: wl, tier: null, category: null, subcategory: null, file: null, topicLabel: null });
   const selectTier       = (tier)   => {
-    if (!tier.categorized) return; // only allow drill-down on categorized tiers
+    if (!tier.categorized) return;
     go({ view: views.CATEGORIES, tier, category: null, subcategory: null, file: null });
   };
   const selectCategory   = (cat)    => go({ view: views.SUBCATEGORIES, category: cat, subcategory: null, file: null });
@@ -44,13 +47,17 @@ export default function App() {
     if (nav.view === views.SUBCATEGORIES && nav.subcategory) return go({ view: views.SUBCATEGORIES, subcategory: null });
     if (nav.view === views.SUBCATEGORIES) return go({ view: views.CATEGORIES, category: null, subcategory: null });
     if (nav.view === views.CATEGORIES) return go({ view: views.TIERS, tier: null, category: null, subcategory: null });
-    if (nav.view === views.TIERS) return goHome();
+    if (nav.view === views.TIERS) return go({ view: views.WORKLOADS, workload: null, tier: null, category: null, subcategory: null, file: null, topicLabel: null });
+    if (nav.view === views.WORKLOADS) return goHome();
   };
 
   let content;
   switch (nav.view) {
     case views.HOME:
-      content = <HomePage onNavigateToTiers={() => go({ view: views.TIERS })} />;
+      content = <HomePage onNavigateToWorkloads={() => go({ view: views.WORKLOADS })} />;
+      break;
+    case views.WORKLOADS:
+      content = <WorkloadOverview onSelectWorkload={selectWorkload} />;
       break;
     case views.TIERS:
       content = <TierView onSelectTier={selectTier} />;
