@@ -25,8 +25,8 @@ export default function App() {
 
   const breadcrumbs = [];
   if (nav.view !== views.HOME) breadcrumbs.push({ label: 'Home', onClick: goHome });
-  if (nav.view !== views.HOME && nav.view !== views.WORKLOADS) breadcrumbs.push({ label: 'Microsoft 365', onClick: () => go({ view: views.WORKLOADS, workload: null, tier: null, category: null, subcategory: null, file: null, topicLabel: null }) });
-  if (nav.workload && nav.view !== views.WORKLOADS) breadcrumbs.push({ label: nav.workload.name, onClick: () => go({ view: views.TIERS, tier: null, category: null, subcategory: null, file: null, topicLabel: null }) });
+  if (nav.workload && nav.view !== views.HOME) breadcrumbs.push({ label: 'Microsoft 365', onClick: goHome });
+  if (nav.workload && nav.view !== views.HOME && nav.view !== views.TIERS) breadcrumbs.push({ label: nav.workload.name, onClick: () => go({ view: views.TIERS, tier: null, category: null, subcategory: null, file: null, topicLabel: null }) });
   if (nav.tier) breadcrumbs.push({ label: nav.tier.name, onClick: () => go({ view: views.CATEGORIES, category: null, subcategory: null, file: null }) });
   if (nav.category) breadcrumbs.push({ label: nav.category.name, onClick: () => go({ view: views.SUBCATEGORIES, subcategory: null, file: null }) });
   if (nav.subcategory) breadcrumbs.push({ label: nav.subcategory.name });
@@ -47,14 +47,14 @@ export default function App() {
     if (nav.view === views.SUBCATEGORIES && nav.subcategory) return go({ view: views.SUBCATEGORIES, subcategory: null });
     if (nav.view === views.SUBCATEGORIES) return go({ view: views.CATEGORIES, category: null, subcategory: null });
     if (nav.view === views.CATEGORIES) return go({ view: views.TIERS, tier: null, category: null, subcategory: null });
-    if (nav.view === views.TIERS) return go({ view: views.WORKLOADS, workload: null, tier: null, category: null, subcategory: null, file: null, topicLabel: null });
+    if (nav.view === views.TIERS) return goHome();
     if (nav.view === views.WORKLOADS) return goHome();
   };
 
   let content;
   switch (nav.view) {
     case views.HOME:
-      content = <HomePage onNavigateToWorkloads={() => go({ view: views.WORKLOADS })} />;
+      content = <HomePage onSelectWorkload={selectWorkload} />;
       break;
     case views.WORKLOADS:
       content = <WorkloadOverview onSelectWorkload={selectWorkload} />;
