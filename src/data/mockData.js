@@ -92,6 +92,9 @@ export const tiers = [
     glow: 'rgba(239,68,68,0.35)',
     sensitivityScore: 82,
     exposureScore: 78,
+    activityRiskScore: 65,
+    userRiskScore: 58,
+    hygieneRiskScore: 22,
     confidenceScore: 91,
     phase: 3,
     sites: 487,
@@ -116,6 +119,9 @@ export const tiers = [
     glow: 'rgba(249,115,22,0.3)',
     sensitivityScore: 74,
     exposureScore: 32,
+    activityRiskScore: 42,
+    userRiskScore: 70,
+    hygieneRiskScore: 35,
     confidenceScore: 85,
     phase: 3,
     sites: 2_340,
@@ -140,6 +146,9 @@ export const tiers = [
     glow: 'rgba(234,179,8,0.2)',
     sensitivityScore: 28,
     exposureScore: 71,
+    activityRiskScore: 15,
+    userRiskScore: 12,
+    hygieneRiskScore: 48,
     confidenceScore: 76,
     phase: 2,
     sites: 8_120,
@@ -164,6 +173,9 @@ export const tiers = [
     glow: 'rgba(99,102,241,0.15)',
     sensitivityScore: 18,
     exposureScore: 22,
+    activityRiskScore: 8,
+    userRiskScore: 5,
+    hygieneRiskScore: 55,
     confidenceScore: 68,
     phase: 1,
     sites: 24_800,
@@ -188,6 +200,9 @@ export const tiers = [
     glow: 'rgba(100,116,139,0.1)',
     sensitivityScore: 8,
     exposureScore: 12,
+    activityRiskScore: 2,
+    userRiskScore: 3,
+    hygieneRiskScore: 78,
     confidenceScore: 72,
     phase: 1,
     sites: 64_253,
@@ -210,6 +225,68 @@ export const tierSummary = {
   totalDocs: tiers.reduce((s, t) => s + t.totalDocs, 0),
   totalMonthlyActivity: tiers.reduce((s, t) => s + t.monthlyReads + t.monthlyWrites, 0),
 };
+
+// ──────────────────────────────────────────
+// TENANT-WIDE SITE LIST (for site picker)
+// ──────────────────────────────────────────
+const classifierPool = [
+  'U.S. Social Security Number', 'Credit Card Number', 'International Banking Account Number (IBAN)',
+  'ABA Routing Number', 'U.S. Driver\'s License Number', 'U.S. Passport Number',
+  'Email Address', 'IP Address', 'Azure Storage Account Key',
+  'EU Debit Card Number', 'Drug Enforcement Agency (DEA) Number',
+];
+const labelPool = ['Highly Confidential', 'Confidential', 'General', 'Public'];
+const exposureTypes = ['Anyone links', 'Org-wide', 'External users', 'Specific people'];
+const tenantSiteNames = [
+  'Finance Hub', 'Marketing Campaigns', 'Sales Enablement', 'Development', 'Customer Service',
+  'Operations', 'Human Resources', 'IT Support', 'SMB', 'Business Control',
+  'Employee Directory', 'Clinical Trial Data', 'Healthcare Provider Identifiers',
+  'Treatment Plans', 'Prescription Information', 'Immunization Records', 'Lab Test Results',
+  'Executive Portal', 'Legal Central', 'M&A War Room', 'Board Materials',
+  'Security Ops', 'Compliance Archives', 'IP Research', 'HR Confidential',
+  'Company Newsletter', 'Training Portal', 'All-Hands Materials', 'Public Policies',
+  'Event Sites', 'Legacy Projects', 'Old Team Sites', 'Archived Initiatives',
+  'Department Libraries', 'Meeting Notes', 'Decommissioned Teams', 'Former Employee Sites',
+  'Sunset Products', 'Pre-Migration Data', 'Test Sites', 'Engineering Wiki',
+  'Product Roadmap', 'Design Assets', 'Customer 360', 'Global Finance Hub',
+  'Project Archives', 'Policy Docs', 'Migration Staging', 'Partner Portal',
+  'Vendor Management', 'Risk & Audit', 'Data Governance', 'Research Lab',
+  'Innovation Hub', 'Strategy Planning', 'Investor Relations', 'Brand Assets',
+  'Social Media', 'Press Releases', 'Recruitment', 'Benefits Administration',
+  'Payroll Processing', 'Tax Documents', 'Contract Management', 'Procurement',
+  'Supply Chain', 'Quality Assurance', 'Release Management', 'Infrastructure',
+  'Cloud Operations', 'Disaster Recovery', 'Access Reviews', 'Audit Reports',
+];
+
+export function getTenantSites() {
+  const rand = seededRandom(42);
+  return tenantSiteNames.map((name, i) => {
+    const numClassifiers = 1 + Math.floor(rand() * 3);
+    const classifiers = [];
+    const used = new Set();
+    for (let c = 0; c < numClassifiers; c++) {
+      const cl = classifierPool[Math.floor(rand() * classifierPool.length)];
+      if (!used.has(cl)) { classifiers.push(cl); used.add(cl); }
+    }
+
+    const label = labelPool[Math.floor(rand() * labelPool.length)];
+    const exposure = exposureTypes[Math.floor(rand() * exposureTypes.length)];
+
+    const sensitiveItems = Math.round(rand() * 5000);
+    const totalItems = sensitiveItems + Math.round(rand() * 20000);
+
+    return {
+      id: `tenant-site-${i}`,
+      name,
+      classifiers,
+      sensitivityLabel: label,
+      exposure,
+      sensitiveItems,
+      totalItems,
+      tierId: i < 5 ? 1 : i < 12 ? 2 : i < 25 ? 3 : i < 45 ? 4 : 5,
+    };
+  });
+}
 
 // ──────────────────────────────────────────
 // CATEGORIES — LLM-derived topic categories
@@ -833,7 +910,7 @@ const subSubfolderNames = [
   'Review','Final','Pending','Approved','Historical','Current',
 ];
 
-const exposureTypes = ['Shared with everyone','External sharing','Organization-wide','Specific users','Private'];
+const siteExposureTypes = ['Shared with everyone','External sharing','Organization-wide','Specific users','Private'];
 const mipLabelOptions = [null, null, null, 'Public', 'General', 'Confidential', 'Highly Confidential', 'Restricted'];
 const classifierOptions = [
   [],[],[],[],['Credit Card'],['SSN'],['PII - Email'],['Financial Data'],
@@ -856,8 +933,8 @@ export function getFilesForFolder(folderId) {
 
     const permissionedUsers = 5 + Math.floor(rand() * 196);
     const accessedUsers30d = Math.floor(rand() * Math.min(permissionedUsers, Math.max(1, Math.floor(permissionedUsers * 0.4))));
-    const exposureIdx = Math.floor(rand() * exposureTypes.length);
-    const exposure = exposureTypes[exposureIdx];
+    const exposureIdx = Math.floor(rand() * siteExposureTypes.length);
+    const exposure = siteExposureTypes[exposureIdx];
     const mipLabel = mipLabelOptions[Math.floor(rand() * mipLabelOptions.length)];
     const classifierNames = classifierOptions[Math.floor(rand() * classifierOptions.length)];
     const classifications = classifierNames.map(name => ({

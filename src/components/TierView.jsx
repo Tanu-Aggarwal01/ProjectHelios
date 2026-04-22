@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { tiers, tierSummary, formatNumber, readinessColor, lastScannedLabel } from '../data/mockData';
+import ManageSitesModal from './ManageSitesModal';
 
 const phaseLabel = (p) => p === 3 ? '✓ Phase 3 — Full Categorization' : p === 2 ? '⏳ Phase 2 — Sampling' : 'Phase 1 — Metadata Only';
 const phaseColor = (p) => p === 3 ? '#22c55e' : p === 2 ? '#eab308' : '#6b6b80';
@@ -8,6 +9,8 @@ const scoreColor = (s) => s >= 70 ? '#ef4444' : s >= 50 ? '#f97316' : s >= 30 ? 
 export default function TierView({ onSelectTier }) {
   const [hovered, setHovered] = useState(null);
   const [triggeringTier, setTriggeringTier] = useState(null);
+  const [showManageSites, setShowManageSites] = useState(false);
+  const [managedSites, setManagedSites] = useState(null);
 
   const handleTierClick = (tier) => {
     if (tier.categorized) {
@@ -30,7 +33,15 @@ export default function TierView({ onSelectTier }) {
             <span className="tier-agent-dot" />
             <span className="tier-agent-text">✨ Posture Agent is active</span>
             <span className="tier-agent-sub">Agentic identity enabled — analyzing your SharePoint data estate</span>
+            <button className="tier-manage-btn" onClick={() => setShowManageSites(true)}>📋 Manage Sites</button>
           </div>
+          {managedSites && (
+            <div className="tier-managed-banner">
+              <span>✅ {managedSites.length} sites manually selected for assessment</span>
+              <button className="tier-managed-edit" onClick={() => setShowManageSites(true)}>Edit</button>
+              <button className="tier-managed-clear" onClick={() => setManagedSites(null)}>Clear</button>
+            </div>
+          )}
           <p>We've identified <strong>{tierSummary.totalSites.toLocaleString()}</strong> SharePoint sites and grouped them into <strong>{tiers.length} tiers</strong> based on <strong>Sensitivity × Exposure</strong> — prioritizing sites where critical data meets broad access.</p>
           <span className="last-scanned">🔄 Last scanned: {lastScannedLabel}</span>
         </div>
@@ -46,7 +57,13 @@ export default function TierView({ onSelectTier }) {
           {tiers.map((tier, i) => {
             const isHovered = hovered === tier.id;
             const isTriggering = triggeringTier === tier.id;
-            const riskScore = Math.round(tier.sensitivityScore * tier.exposureScore / 100);
+            const riskScore = Math.round(
+              0.30 * tier.sensitivityScore +
+              0.25 * tier.exposureScore +
+              0.20 * tier.activityRiskScore +
+              0.15 * tier.userRiskScore +
+              0.10 * tier.hygieneRiskScore
+            );
 
             return (
               <div
@@ -161,10 +178,13 @@ export default function TierView({ onSelectTier }) {
         <div className="tier-side">
           <div className="tier-panel">
             <h4>🎯 Tiering Model</h4>
-            <p className="panel-note" style={{ marginBottom: 10 }}>Sites are ranked by <strong style={{ color: '#c8c8e0' }}>Sensitivity × Exposure</strong>, not activity. This ensures critical data with broad access is prioritized first.</p>
+            <p className="panel-note" style={{ marginBottom: 10 }}>Sites ranked by a <strong style={{ color: '#c8c8e0' }}>5-dimension composite score</strong> aligned with the posture spec.</p>
             <div className="model-axes">
-              <div className="model-axis"><span className="model-axis-icon">🔒</span><span className="model-axis-name">Sensitivity</span><span className="model-axis-desc">Labels, DLP matches, SIT hits, org context</span></div>
-              <div className="model-axis"><span className="model-axis-icon">🌐</span><span className="model-axis-name">Exposure</span><span className="model-axis-desc">Permissions, sharing, guest access, reach</span></div>
+              <div className="model-axis"><span className="model-axis-icon">🔒</span><span className="model-axis-name">Sensitive Data</span><span className="model-axis-wt">30%</span></div>
+              <div className="model-axis"><span className="model-axis-icon">🌐</span><span className="model-axis-name">Exposure</span><span className="model-axis-wt">25%</span></div>
+              <div className="model-axis"><span className="model-axis-icon">📈</span><span className="model-axis-name">Activity Risk</span><span className="model-axis-wt">20%</span></div>
+              <div className="model-axis"><span className="model-axis-icon">👤</span><span className="model-axis-name">User Risk</span><span className="model-axis-wt">15%</span></div>
+              <div className="model-axis"><span className="model-axis-icon">🧹</span><span className="model-axis-name">Hygiene</span><span className="model-axis-wt">10%</span></div>
             </div>
           </div>
 
@@ -190,7 +210,10 @@ export default function TierView({ onSelectTier }) {
           <div className="tier-panel">
             <h4>📊 Risk Distribution</h4>
             {tiers.map(t => {
-              const risk = Math.round(t.sensitivityScore * t.exposureScore / 100);
+              const risk = Math.round(
+                0.30 * t.sensitivityScore + 0.25 * t.exposureScore +
+                0.20 * t.activityRiskScore + 0.15 * t.userRiskScore + 0.10 * t.hygieneRiskScore
+              );
               return (
                 <div key={t.id} className="dist-row">
                   <span className="dist-dot" style={{ background: t.color }} />
@@ -219,6 +242,16 @@ export default function TierView({ onSelectTier }) {
         </div>
       </div>
 
+      {showManageSites && (
+        <ManageSitesModal
+          onClose={() => setShowManageSites(false)}
+          onConfirm={(siteIds) => {
+            setManagedSites(siteIds);
+            setShowManageSites(false);
+          }}
+        />
+      )}
+
       <style>{`
         .tier-view { height: 100%; display: flex; flex-direction: column; padding: 20px 28px 16px; overflow: hidden; }
         .tier-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; flex-shrink: 0; }
@@ -238,7 +271,27 @@ export default function TierView({ onSelectTier }) {
           animation: pd 2s infinite;
         }
         .tier-agent-text { font-size: 12px; font-weight: 700; color: #86efac; }
-        .tier-agent-sub { font-size: 11px; color: #6b6b80; margin-left: 4px; }
+        .tier-agent-sub { font-size: 11px; color: #6b6b80; margin-left: 4px; flex: 1; }
+        .tier-manage-btn {
+          font-size: 11px; font-weight: 600; color: #a5b4fc; background: rgba(99,102,241,0.1);
+          border: 1px solid rgba(99,102,241,0.25); border-radius: 6px; padding: 5px 12px;
+          cursor: pointer; font-family: inherit; transition: all .15s; white-space: nowrap;
+        }
+        .tier-manage-btn:hover { background: rgba(99,102,241,0.2); color: white; }
+
+        .tier-managed-banner {
+          display: flex; align-items: center; gap: 10px; margin-bottom: 8px;
+          padding: 7px 14px; border-radius: 8px;
+          background: rgba(99,102,241,0.08); border: 1px solid rgba(99,102,241,0.2);
+          font-size: 12px; color: #a5b4fc;
+        }
+        .tier-managed-edit, .tier-managed-clear {
+          font-size: 10px; background: none; border: 1px solid rgba(255,255,255,0.1);
+          color: #8888a0; border-radius: 4px; padding: 2px 8px; cursor: pointer;
+          font-family: inherit; transition: all .15s;
+        }
+        .tier-managed-edit:hover { color: #a5b4fc; border-color: rgba(99,102,241,0.3); }
+        .tier-managed-clear:hover { color: #ef4444; border-color: rgba(239,68,68,0.3); }
         .tier-stats { display: flex; gap: 20px; }
         .ts { text-align: center; padding: 8px 18px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; }
         .ts-val { display: block; font-size: 20px; font-weight: 700; letter-spacing: -0.5px; }
@@ -363,7 +416,8 @@ export default function TierView({ onSelectTier }) {
         .model-axes { display: flex; flex-direction: column; gap: 6px; }
         .model-axis { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 6px; background: rgba(255,255,255,0.03); }
         .model-axis-icon { font-size: 14px; }
-        .model-axis-name { font-size: 11px; font-weight: 700; color: #c8c8e0; min-width: 70px; }
+        .model-axis-name { font-size: 11px; font-weight: 700; color: #c8c8e0; flex: 1; }
+        .model-axis-wt { font-size: 10px; font-weight: 700; color: #6366f1; }
         .model-axis-desc { font-size: 9px; color: #6b6b80; }
       `}</style>
     </div>
