@@ -76,7 +76,7 @@ export const workloadSummary = {
   totalItems: workloads.reduce((s, w) => s + w.totalItems, 0),
   totalUnlabeled: workloads.reduce((s, w) => s + w.unlabeled, 0),
   totalOverExposed: workloads.reduce((s, w) => s + w.overExposed, 0),
-  totalStale: workloads.reduce((s, w) => s + w.staleData, 0),
+  totalROT: workloads.reduce((s, w) => s + w.staleData, 0),
 };
 
 // ──────────────────────────────────────────

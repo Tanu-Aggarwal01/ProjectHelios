@@ -107,9 +107,9 @@ export default function HomePage({ onSelectWorkload }) {
               </div>
               <div className="hp-est-stat">
                 <span className="hp-est-val" style={{ color: '#eab308' }}>
-                  {formatNumber(workloadSummary.totalStale)}
+                  {formatNumber(workloadSummary.totalROT)}
                 </span>
-                <span className="hp-est-lbl">Stale Data</span>
+                <span className="hp-est-lbl">ROT</span>
               </div>
             </div>
 
@@ -163,13 +163,13 @@ export default function HomePage({ onSelectWorkload }) {
                           <div className="hp-wl-bar-wrap"><div className="hp-wl-bar" style={{ width: `${wl.stalePct}%`, background: '#eab308' }} /></div>
                           <span className="hp-wl-m-val" style={{ color: '#eab308' }}>{formatNumber(wl.staleData)}</span>
                           <span className="hp-wl-m-pct" style={{ color: '#eab308' }}>{wl.stalePct}%</span>
-                          <span className="hp-wl-m-lbl">🗑️ Stale</span>
+                          <span className="hp-wl-m-lbl">🗑️ ROT</span>
                         </div>
                       </div>
 
                       <div className="hp-wl-footer">
                         {wl.explorable ? (
-                          <button className="hp-wl-explore-btn">Explore {wl.name} →</button>
+                          <button className="hp-wl-explore-btn">✨ Explore {wl.name} with Posture Agent →</button>
                         ) : (
                           <span className="hp-wl-coming">Coming soon</span>
                         )}

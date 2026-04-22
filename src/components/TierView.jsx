@@ -24,7 +24,12 @@ export default function TierView({ onSelectTier }) {
     <div className="tier-view">
       <div className="tier-top">
         <div className="tier-intro">
-          <h2>Your Digital Estate</h2>
+          <h2>Your Digital Estate — SharePoint</h2>
+          <div className="tier-agent-banner">
+            <span className="tier-agent-dot" />
+            <span className="tier-agent-text">✨ Posture Agent is active</span>
+            <span className="tier-agent-sub">Agentic identity enabled — analyzing your SharePoint data estate</span>
+          </div>
           <p>We've identified <strong>{tierSummary.totalSites.toLocaleString()}</strong> SharePoint sites across your organization and grouped them into <strong>{tiers.length} tiers</strong> by activity level — from the most actively used down to dormant.</p>
           <span className="last-scanned">🔄 Last scanned: {lastScannedLabel}</span>
         </div>
@@ -124,7 +129,7 @@ export default function TierView({ onSelectTier }) {
                       {isTriggering ? (
                         <><span className="trigger-spinner" /> Running…</>
                       ) : (
-                        <>✨ Run Categorization with Security Copilot</>
+                        <>✨ Run Categorization with Posture Agent</>
                       )}
                     </button>
                   )}
@@ -148,7 +153,7 @@ export default function TierView({ onSelectTier }) {
                 <span className="cov-label">Tiers pending</span>
               </div>
             </div>
-            <p className="panel-note">The top tier has been automatically analyzed and grouped into topic categories. Trigger categorization on remaining tiers to organize their sites.</p>
+            <p className="panel-note">The top tier has been automatically analyzed and grouped into topic categories by the Posture Agent. Trigger categorization on remaining tiers to organize their sites.</p>
           </div>
 
           <div className="tier-panel">
@@ -189,6 +194,20 @@ export default function TierView({ onSelectTier }) {
         .tier-intro h2 { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 4px; }
         .tier-intro p { font-size: 13px; color: #a0a0b8; max-width: 560px; line-height: 1.5; }
         .tier-intro strong { color: #c8c8e0; }
+
+        .tier-agent-banner {
+          display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
+          padding: 8px 14px; border-radius: 8px;
+          background: linear-gradient(135deg, rgba(34,197,94,0.08), rgba(99,102,241,0.06));
+          border: 1px solid rgba(34,197,94,0.2);
+        }
+        .tier-agent-dot {
+          width: 8px; height: 8px; border-radius: 50%; background: #22c55e;
+          box-shadow: 0 0 8px rgba(34,197,94,0.5); flex-shrink: 0;
+          animation: pd 2s infinite;
+        }
+        .tier-agent-text { font-size: 12px; font-weight: 700; color: #86efac; }
+        .tier-agent-sub { font-size: 11px; color: #6b6b80; margin-left: 4px; }
         .tier-stats { display: flex; gap: 20px; }
         .ts { text-align: center; padding: 8px 18px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; }
         .ts-val { display: block; font-size: 20px; font-weight: 700; letter-spacing: -0.5px; }

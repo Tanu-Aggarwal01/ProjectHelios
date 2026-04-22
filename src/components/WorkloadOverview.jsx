@@ -38,9 +38,9 @@ export default function WorkloadOverview({ onSelectWorkload }) {
           </div>
           <div className="wl-ts">
             <span className="wl-ts-val" style={{ color: '#eab308' }}>
-              {formatNumber(workloadSummary.totalStale)}
+              {formatNumber(workloadSummary.totalROT)}
             </span>
-            <span className="wl-ts-lbl">Stale Data</span>
+            <span className="wl-ts-lbl">ROT</span>
           </div>
         </div>
       </div>
@@ -105,13 +105,13 @@ export default function WorkloadOverview({ onSelectWorkload }) {
                     </div>
                     <span className="wl-metric-val" style={{ color: '#eab308' }}>{formatNumber(wl.staleData)}</span>
                     <span className="wl-metric-pct" style={{ color: '#eab308' }}>{wl.stalePct}%</span>
-                    <span className="wl-metric-lbl">🗑️ Stale</span>
+                    <span className="wl-metric-lbl">🗑️ ROT</span>
                   </div>
                 </div>
 
                 <div className="wl-block-footer">
                   {wl.explorable ? (
-                    <button className="wl-explore-btn">Explore {wl.name} →</button>
+                    <button className="wl-explore-btn">✨ Explore {wl.name} with Posture Agent →</button>
                   ) : (
                     <span className="wl-coming-soon">Coming soon</span>
                   )}

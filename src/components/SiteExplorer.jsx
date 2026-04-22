@@ -199,18 +199,18 @@ export default function SiteExplorer({ site, category, onClose }) {
       },
       'folder-retention': {
         title: '📋 Apply Retention Policy',
-        desc: `Apply a data lifecycle management policy to ${rotFiles.length} stale file(s) in "${selectedFolder?.name}" that haven't been accessed in over a year.`,
+        desc: `Apply a data lifecycle management policy to ${rotFiles.length} ROT file(s) in "${selectedFolder?.name}" that haven't been accessed in over a year.`,
         content: (
           <>
             <div className="dd-mit-field"><label>Retention action</label>
               <div className="dd-mit-select">
                 <button className="dd-mit-opt dd-mit-opt-active">Delete files after 30-day review period</button>
-                <button className="dd-mit-opt">Move stale files to archive</button>
+                <button className="dd-mit-opt">Move ROT files to archive</button>
                 <button className="dd-mit-opt">Apply "Review Required" retention label</button>
                 <button className="dd-mit-opt">Apply "Regulatory Hold" retention label</button>
               </div>
             </div>
-            <div className="dd-mit-info-row"><span>🗑️ Stale files (1yr+)</span><strong>{rotFiles.length}</strong></div>
+            <div className="dd-mit-info-row"><span>🗑️ ROT files (1yr+)</span><strong>{rotFiles.length}</strong></div>
             <div className="dd-mit-info-row"><span>📂 Folder</span><strong>{selectedFolder?.name}</strong></div>
             <div className="dd-mit-file-preview">{rotFiles.slice(0,5).map(f => <div key={f.id} className="dd-mit-file-item">{fileIcon(f.type)} {f.name} <span style={{color:'#6b6b80',fontSize:9}}>last accessed: {f.lastAccessed}</span></div>)}{rotFiles.length > 5 && <div className="dd-mit-file-more">+{rotFiles.length - 5} more files</div>}</div>
           </>
@@ -231,7 +231,7 @@ export default function SiteExplorer({ site, category, onClose }) {
             </div>
             <div className="dd-mit-field"><label>Review reason</label>
               <div className="dd-mit-select">
-                <button className="dd-mit-opt dd-mit-opt-active">Stale content — not accessed in 1+ year</button>
+                <button className="dd-mit-opt dd-mit-opt-active">ROT content — not accessed in 1+ year</button>
                 <button className="dd-mit-opt">Suspected sensitive content needs review</button>
                 <button className="dd-mit-opt">Permissions need administrator review</button>
                 <button className="dd-mit-opt">Redundant or duplicate content</button>
@@ -443,7 +443,7 @@ export default function SiteExplorer({ site, category, onClose }) {
                                   <div className="se-file-narrative">
                                     <div className="se-file-narrative-header">
                                       <span className="se-file-narrative-icon">✨</span>
-                                      <span className="se-file-narrative-label">Security Copilot Insights</span>
+                                      <span className="se-file-narrative-label">Posture Agent Insights</span>
                                     </div>
                                     <p className="se-file-narrative-summary">{narrative.summary}</p>
                                     <ul className="se-file-narrative-events">
@@ -634,7 +634,7 @@ export default function SiteExplorer({ site, category, onClose }) {
                   <div className="se-fa-modal-field">
                     <label>Review reason</label>
                     <div className="se-fa-modal-options">
-                      <button className="se-fa-modal-opt se-fa-modal-opt-active">Stale content — not accessed in 1+ year</button>
+                      <button className="se-fa-modal-opt se-fa-modal-opt-active">ROT content — not accessed in 1+ year</button>
                       <button className="se-fa-modal-opt">Suspected sensitive content</button>
                       <button className="se-fa-modal-opt">Overshared — needs permission review</button>
                       <button className="se-fa-modal-opt">Duplicate or redundant content</button>

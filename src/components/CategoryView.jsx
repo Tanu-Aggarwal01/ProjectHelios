@@ -132,7 +132,7 @@ function CategoryDeepDive({ category, onClose }) {
                   <div className="dd-readiness-list">
                     <div className="dd-rd dd-rd-tip"><span className="dd-rd-lbl">🏷️ Unlabeled</span><div className="dd-rd-bar-w"><div className="dd-rd-bar" style={{width:`${selectedSite.classificationRisk}%`,background:readinessColor(selectedSite.classificationRisk)}}/></div><span className="dd-rd-v" style={{color:readinessColor(selectedSite.classificationRisk)}}>{selectedSite.classificationRisk}%</span><div className="dd-rd-tooltip">Content without sensitivity labels cannot be protected by DLP policies — Copilot and AI agents can freely access and share this data without controls.</div></div>
                     <div className="dd-rd dd-rd-tip"><span className="dd-rd-lbl">🔓 Overexposed</span><div className="dd-rd-bar-w"><div className="dd-rd-bar" style={{width:`${selectedSite.exposureRisk}%`,background:readinessColor(selectedSite.exposureRisk)}}/></div><span className="dd-rd-v" style={{color:readinessColor(selectedSite.exposureRisk)}}>{selectedSite.exposureRisk}%</span><div className="dd-rd-tooltip">Files with broad permissions are visible to Copilot for every user who has access — oversharing amplifies AI exposure across the organization.</div></div>
-                    <div className="dd-rd dd-rd-tip"><span className="dd-rd-lbl">🗑️ ROT</span><div className="dd-rd-bar-w"><div className="dd-rd-bar" style={{width:`${selectedSite.governanceRisk}%`,background:readinessColor(selectedSite.governanceRisk)}}/></div><span className="dd-rd-v" style={{color:readinessColor(selectedSite.governanceRisk)}}>{selectedSite.governanceRisk}%</span><div className="dd-rd-tooltip">Stale content pollutes AI responses with outdated information and increases attack surface — Copilot doesn't know a file is obsolete.</div></div>
+                    <div className="dd-rd dd-rd-tip"><span className="dd-rd-lbl">🗑️ ROT</span><div className="dd-rd-bar-w"><div className="dd-rd-bar" style={{width:`${selectedSite.governanceRisk}%`,background:readinessColor(selectedSite.governanceRisk)}}/></div><span className="dd-rd-v" style={{color:readinessColor(selectedSite.governanceRisk)}}>{selectedSite.governanceRisk}%</span><div className="dd-rd-tooltip">ROT content pollutes AI responses with outdated information and increases attack surface — Copilot doesn't know a file is obsolete.</div></div>
                   </div>
                 </div>
 
@@ -150,7 +150,7 @@ function CategoryDeepDive({ category, onClose }) {
                   <div className="dd-narrative">
                     <div className="dd-narrative-header">
                       <span className="dd-narrative-icon">✨</span>
-                      <span className="dd-narrative-label">Security Copilot Insights</span>
+                      <span className="dd-narrative-label">Posture Agent Insights</span>
                     </div>
                     <p className="dd-narrative-text">{getSiteNarrative(selectedSite.name, selectedSite.totalSiteDocs, selectedSite.totalUsers)}</p>
                     <a className="narrative-logs-link" href="https://www.microsoft.com" target="_blank" rel="noopener noreferrer">View all activity logs →</a>
@@ -193,7 +193,7 @@ function CategoryDeepDive({ category, onClose }) {
                       <div className="dd-mit-group">
                         <div className="dd-mit-group-head" style={{borderLeftColor:'#eab308'}}>
                           <span className="dd-mit-group-icon">🗑️</span>
-                          <div><div className="dd-mit-group-title">Manage ROT Content</div><div className="dd-mit-group-risk" style={{color:readinessColor(selectedSite.governanceRisk)}}>{selectedSite.governanceRisk}% stale (1yr+)</div></div>
+                          <div><div className="dd-mit-group-title">Manage ROT Content</div><div className="dd-mit-group-risk" style={{color:readinessColor(selectedSite.governanceRisk)}}>{selectedSite.governanceRisk}% ROT (1yr+)</div></div>
                         </div>
                         <div className="dd-mit-group-btns">
                           <button className="dd-mit-btn" onClick={() => setMitigationModal('retention-policy')}><span className="dd-mit-icon">📋</span><div><div className="dd-mit-title">Create Retention Policies</div><div className="dd-mit-sub">Purview DLM data lifecycle management</div></div></button>
@@ -1005,7 +1005,7 @@ export default function CategoryView({ tier, onSelectCategory, onOpenTopicGraph 
       <div className="cat-top">
         <div>
           <h2><span style={{ color: tier.color }}>■</span> {tier.name}</h2>
-          <p>{tier.sites.toLocaleString()} sites · {formatNumber(tier.totalDocs)} documents — Organized into {cats.length} topic categories by Security Copilot, sized by document volume</p>
+          <p>{tier.sites.toLocaleString()} sites · {formatNumber(tier.totalDocs)} documents — Organized into {cats.length} topic categories by Posture Agent, sized by document volume</p>
           <span className="last-scanned">🔄 Last scanned: {lastScannedLabel}</span>
         </div>
       </div>
@@ -1105,7 +1105,7 @@ export default function CategoryView({ tier, onSelectCategory, onOpenTopicGraph 
               <div className="cd-narrative">
                 <div className="cd-narrative-header">
                   <span className="cd-narrative-icon">✨</span>
-                  <span className="cd-narrative-label">Security Copilot Insights</span>
+                  <span className="cd-narrative-label">Posture Agent Insights</span>
                 </div>
                 <p className="cd-narrative-text">{getCategoryNarrative(selectedCat.name, selectedCat.documentCount, selectedCat.siteCount)}</p>
                 <a className="narrative-logs-link" href="https://www.microsoft.com" target="_blank" rel="noopener noreferrer">View all activity logs →</a>
@@ -1140,7 +1140,7 @@ export default function CategoryView({ tier, onSelectCategory, onOpenTopicGraph 
                       This category contains {formatNumber(selectedCat.documentCount)} documents. Run subcategorization to break it into finer-grained topic groups for deeper analysis.
                     </p>
                     <button className="cd-subdivide-btn" onClick={() => handleSubdivide(selectedCat.id)}>
-                      ✨ Generate Subcategories with Security Copilot
+                      ✨ Generate Subcategories with Posture Agent
                     </button>
                   </>
                 )}
@@ -1196,9 +1196,9 @@ export default function CategoryView({ tier, onSelectCategory, onOpenTopicGraph 
               )}
               {quickAction.type === 'retention' && (
                 <>
-                  <p>Apply a retention policy to all <strong>{formatNumber(Math.round(quickAction.cat.documentCount * quickAction.cat.governanceRisk / 100))}</strong> stale files in this category that haven't been accessed in over a year. Files will be flagged for deletion after a 30-day review period.</p>
+                  <p>Apply a retention policy to all <strong>{formatNumber(Math.round(quickAction.cat.documentCount * quickAction.cat.governanceRisk / 100))}</strong> ROT files in this category that haven't been accessed in over a year. Files will be flagged for deletion after a 30-day review period.</p>
                   <div className="cd-qa-impact">
-                    <div><span>🗑️ Stale files</span><strong>{formatNumber(Math.round(quickAction.cat.documentCount * quickAction.cat.governanceRisk / 100))}</strong></div>
+                    <div><span>🗑️ ROT files</span><strong>{formatNumber(Math.round(quickAction.cat.documentCount * quickAction.cat.governanceRisk / 100))}</strong></div>
                     <div><span>📍 Sites affected</span><strong>{formatNumber(quickAction.cat.siteCount)}</strong></div>
                     <div><span>⏱️ Review period</span><strong>30 days</strong></div>
                   </div>

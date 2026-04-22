@@ -12,6 +12,7 @@ const views = { HOME: 'home', WORKLOADS: 'workloads', TIERS: 'tiers', CATEGORIES
 export default function App() {
   const [nav, setNav] = useState({ view: views.HOME, workload: null, tier: null, category: null, subcategory: null, file: null, topicLabel: null });
   const [transitioning, setTransitioning] = useState(false);
+  const [agentActivating, setAgentActivating] = useState(false);
 
   const go = useCallback((next) => {
     setTransitioning(true);
@@ -32,7 +33,13 @@ export default function App() {
   if (nav.subcategory) breadcrumbs.push({ label: nav.subcategory.name });
   if (nav.file) breadcrumbs.push({ label: nav.file.name });
 
-  const selectWorkload   = (wl)     => go({ view: views.TIERS, workload: wl, tier: null, category: null, subcategory: null, file: null, topicLabel: null });
+  const selectWorkload   = (wl)     => {
+    setAgentActivating(true);
+    setTimeout(() => {
+      setAgentActivating(false);
+      go({ view: views.TIERS, workload: wl, tier: null, category: null, subcategory: null, file: null, topicLabel: null });
+    }, 2200);
+  };
   const selectTier       = (tier)   => {
     if (!tier.categorized) return;
     go({ view: views.CATEGORIES, tier, category: null, subcategory: null, file: null });
@@ -126,6 +133,22 @@ export default function App() {
         {content}
       </div>
 
+      {/* Agent Activation Overlay */}
+      {agentActivating && (
+        <div className="agent-overlay">
+          <div className="agent-overlay-card">
+            <div className="agent-spinner" />
+            <h3>✨ Activating Posture Agent</h3>
+            <p>Setting up agentic identity and connecting to your SharePoint data estate…</p>
+            <div className="agent-steps">
+              <div className="agent-step agent-step-done"><span className="agent-step-dot agent-step-dot-done" />Creating agentic identity</div>
+              <div className="agent-step agent-step-active"><span className="agent-step-dot agent-step-dot-active" />Connecting to data sources</div>
+              <div className="agent-step"><span className="agent-step-dot" />Analyzing estate topology</div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <style>{`
         .app-container {
           width: 100vw; height: 100vh; overflow: hidden;
@@ -172,6 +195,37 @@ export default function App() {
         .view-wrapper { flex: 1; min-height: 0; position: relative; z-index: 1; transition: opacity .3s ease, transform .3s ease; }
         .v-out { opacity: 0; transform: scale(.98); }
         .v-in { opacity: 1; transform: scale(1); }
+
+        /* Agent Activation Overlay */
+        .agent-overlay {
+          position: fixed; inset: 0; z-index: 100;
+          background: rgba(7,7,15,0.85); backdrop-filter: blur(16px);
+          display: flex; align-items: center; justify-content: center;
+          animation: agentFadeIn 0.3s ease;
+        }
+        @keyframes agentFadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .agent-overlay-card {
+          text-align: center; padding: 40px 48px; border-radius: 20px;
+          background: rgba(255,255,255,0.04); border: 1px solid rgba(99,102,241,0.25);
+          box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 40px rgba(99,102,241,0.1);
+          animation: agentCardIn 0.4s ease;
+        }
+        @keyframes agentCardIn { from { opacity: 0; transform: scale(0.95) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+        .agent-spinner {
+          width: 40px; height: 40px; margin: 0 auto 16px;
+          border: 3px solid rgba(99,102,241,0.2); border-top-color: #8b5cf6;
+          border-radius: 50%; animation: agentSpin 0.8s linear infinite;
+        }
+        @keyframes agentSpin { to { transform: rotate(360deg); } }
+        .agent-overlay-card h3 { font-size: 18px; font-weight: 700; margin-bottom: 6px; color: #e0e0ff; }
+        .agent-overlay-card p { font-size: 13px; color: #8888a0; margin-bottom: 20px; }
+        .agent-steps { display: flex; flex-direction: column; gap: 8px; text-align: left; }
+        .agent-step { display: flex; align-items: center; gap: 10px; font-size: 12px; color: #4a4a60; }
+        .agent-step-done { color: #22c55e; }
+        .agent-step-active { color: #a5b4fc; }
+        .agent-step-dot { width: 8px; height: 8px; border-radius: 50%; background: #2a2a3a; flex-shrink: 0; }
+        .agent-step-dot-done { background: #22c55e; box-shadow: 0 0 6px rgba(34,197,94,0.4); }
+        .agent-step-dot-active { background: #8b5cf6; box-shadow: 0 0 6px rgba(139,92,246,0.4); animation: pd 1.5s infinite; }
       `}</style>
     </div>
   );
