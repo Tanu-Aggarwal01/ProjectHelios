@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { tiers, tierSummary, formatNumber, readinessColor, lastScannedLabel } from '../data/mockData';
 
+const phaseLabel = (p) => p === 3 ? '✓ Phase 3 — Full Categorization' : p === 2 ? '⏳ Phase 2 — Sampling' : 'Phase 1 — Metadata Only';
+const phaseColor = (p) => p === 3 ? '#22c55e' : p === 2 ? '#eab308' : '#6b6b80';
+const scoreColor = (s) => s >= 70 ? '#ef4444' : s >= 50 ? '#f97316' : s >= 30 ? '#eab308' : '#22c55e';
+
 export default function TierView({ onSelectTier }) {
   const [hovered, setHovered] = useState(null);
   const [triggeringTier, setTriggeringTier] = useState(null);
-
-  const maxActivity = tiers[0].monthlyReads + tiers[0].monthlyWrites;
 
   const handleTierClick = (tier) => {
     if (tier.categorized) {
@@ -16,7 +18,6 @@ export default function TierView({ onSelectTier }) {
   const handleTriggerCategorization = (e, tier) => {
     e.stopPropagation();
     setTriggeringTier(tier.id);
-    // Simulate triggering categorization
     setTimeout(() => setTriggeringTier(null), 2000);
   };
 
@@ -30,22 +31,22 @@ export default function TierView({ onSelectTier }) {
             <span className="tier-agent-text">✨ Posture Agent is active</span>
             <span className="tier-agent-sub">Agentic identity enabled — analyzing your SharePoint data estate</span>
           </div>
-          <p>We've identified <strong>{tierSummary.totalSites.toLocaleString()}</strong> SharePoint sites across your organization and grouped them into <strong>{tiers.length} tiers</strong> by activity level — from the most actively used down to dormant.</p>
+          <p>We've identified <strong>{tierSummary.totalSites.toLocaleString()}</strong> SharePoint sites and grouped them into <strong>{tiers.length} tiers</strong> based on <strong>Sensitivity × Exposure</strong> — prioritizing sites where critical data meets broad access.</p>
           <span className="last-scanned">🔄 Last scanned: {lastScannedLabel}</span>
         </div>
         <div className="tier-stats">
           <div className="ts"><span className="ts-val">{tierSummary.totalSites.toLocaleString()}</span><span className="ts-lbl">SharePoint Sites</span></div>
           <div className="ts"><span className="ts-val">{formatNumber(tierSummary.totalDocs)}</span><span className="ts-lbl">Total Documents</span></div>
-          <div className="ts"><span className="ts-val">{formatNumber(tierSummary.totalMonthlyActivity)}</span><span className="ts-lbl">Monthly Activity</span></div>
+          <div className="ts"><span className="ts-val">{tiers.filter(t => t.phase === 3).length}</span><span className="ts-lbl">In Phase 3</span></div>
         </div>
       </div>
 
       <div className="tier-body">
         <div className="tier-list">
           {tiers.map((tier, i) => {
-            const actRatio = (tier.monthlyReads + tier.monthlyWrites) / maxActivity;
             const isHovered = hovered === tier.id;
             const isTriggering = triggeringTier === tier.id;
+            const riskScore = Math.round(tier.sensitivityScore * tier.exposureScore / 100);
 
             return (
               <div
@@ -70,13 +71,34 @@ export default function TierView({ onSelectTier }) {
                     <div className="tier-name-row">
                       <span className="tier-name">{tier.name}</span>
                       <span className="tier-label" style={{ background: tier.color + '22', color: tier.color }}>{tier.label}</span>
+                      <span className="tier-phase-badge" style={{ background: phaseColor(tier.phase) + '18', color: phaseColor(tier.phase) }}>{phaseLabel(tier.phase)}</span>
                       {tier.categorized && <span className="tier-status-badge tier-status-ready">✓ Categorized</span>}
-                      {!tier.categorized && <span className="tier-status-badge tier-status-pending">Awaiting categorization</span>}
                     </div>
                     <p className="tier-desc">{tier.description}</p>
                   </div>
 
                   <div className="tier-metrics">
+                    {/* Primary: Sensitivity × Exposure scores */}
+                    <div className="tier-score-group">
+                      <div className="tier-score">
+                        <div className="ts-bar-wrap"><div className="ts-bar" style={{ width: `${tier.sensitivityScore}%`, background: scoreColor(tier.sensitivityScore) }} /></div>
+                        <span className="ts-score-val" style={{ color: scoreColor(tier.sensitivityScore) }}>{tier.sensitivityScore}</span>
+                        <span className="tm-lbl">🔒 Sensitivity</span>
+                      </div>
+                      <div className="tier-score">
+                        <div className="ts-bar-wrap"><div className="ts-bar" style={{ width: `${tier.exposureScore}%`, background: scoreColor(tier.exposureScore) }} /></div>
+                        <span className="ts-score-val" style={{ color: scoreColor(tier.exposureScore) }}>{tier.exposureScore}</span>
+                        <span className="tm-lbl">🌐 Exposure</span>
+                      </div>
+                      <div className="tier-score tier-risk-score">
+                        <span className="ts-risk-val" style={{ color: tier.color }}>{riskScore}</span>
+                        <span className="tm-lbl">⚡ Risk</span>
+                      </div>
+                    </div>
+
+                    <div className="tier-metric-sep" />
+
+                    {/* Secondary: Volume */}
                     <div className="tier-metric">
                       <span className="tm-val">{tier.sites.toLocaleString()}</span>
                       <span className="tm-lbl">Sites</span>
@@ -85,14 +107,10 @@ export default function TierView({ onSelectTier }) {
                       <span className="tm-val">{formatNumber(tier.totalDocs)}</span>
                       <span className="tm-lbl">Documents</span>
                     </div>
-                    <div className="tier-metric">
-                      <span className="tm-val">{formatNumber(tier.monthlyReads)}</span>
-                      <span className="tm-lbl">Reads/mo</span>
-                    </div>
-                    <div className="tier-metric">
-                      <span className="tm-val">{formatNumber(tier.monthlyWrites)}</span>
-                      <span className="tm-lbl">Writes/mo</span>
-                    </div>
+
+                    <div className="tier-metric-sep" />
+
+                    {/* Posture risks */}
                     <div className="tier-readiness">
                       <div className="tr-item">
                         <div className="tr-bar-w"><div className="tr-bar" style={{ width: `${tier.classificationRisk}%`, background: readinessColor(tier.classificationRisk) }} /></div>
@@ -142,47 +160,60 @@ export default function TierView({ onSelectTier }) {
         {/* Side panel — summary */}
         <div className="tier-side">
           <div className="tier-panel">
-            <h4>📋 Coverage Status</h4>
-            <div className="coverage-summary">
-              <div className="cov-item cov-done">
-                <span className="cov-count">{tiers.filter(t => t.categorized).length}</span>
-                <span className="cov-label">Tier categorized</span>
-              </div>
-              <div className="cov-item cov-pending">
-                <span className="cov-count">{tiers.filter(t => !t.categorized).length}</span>
-                <span className="cov-label">Tiers pending</span>
-              </div>
+            <h4>🎯 Tiering Model</h4>
+            <p className="panel-note" style={{ marginBottom: 10 }}>Sites are ranked by <strong style={{ color: '#c8c8e0' }}>Sensitivity × Exposure</strong>, not activity. This ensures critical data with broad access is prioritized first.</p>
+            <div className="model-axes">
+              <div className="model-axis"><span className="model-axis-icon">🔒</span><span className="model-axis-name">Sensitivity</span><span className="model-axis-desc">Labels, DLP matches, SIT hits, org context</span></div>
+              <div className="model-axis"><span className="model-axis-icon">🌐</span><span className="model-axis-name">Exposure</span><span className="model-axis-desc">Permissions, sharing, guest access, reach</span></div>
             </div>
-            <p className="panel-note">The top tier has been automatically analyzed and grouped into topic categories by the Posture Agent. Trigger categorization on remaining tiers to organize their sites.</p>
           </div>
 
           <div className="tier-panel">
-            <h4>📊 Activity Distribution</h4>
+            <h4>📋 Pipeline Status</h4>
+            <div className="coverage-summary">
+              <div className="cov-item cov-done">
+                <span className="cov-count">{tiers.filter(t => t.phase === 3).length}</span>
+                <span className="cov-label">Phase 3</span>
+              </div>
+              <div className="cov-item cov-sampling">
+                <span className="cov-count">{tiers.filter(t => t.phase === 2).length}</span>
+                <span className="cov-label">Phase 2</span>
+              </div>
+              <div className="cov-item cov-pending">
+                <span className="cov-count">{tiers.filter(t => t.phase === 1).length}</span>
+                <span className="cov-label">Phase 1</span>
+              </div>
+            </div>
+            <p className="panel-note">Tier 1 has been fully categorized by the Posture Agent. Tier 2 is queued for Phase 3. Trigger categorization on remaining tiers.</p>
+          </div>
+
+          <div className="tier-panel">
+            <h4>📊 Risk Distribution</h4>
             {tiers.map(t => {
-              const pct = ((t.monthlyReads + t.monthlyWrites) / tierSummary.totalMonthlyActivity * 100).toFixed(1);
+              const risk = Math.round(t.sensitivityScore * t.exposureScore / 100);
               return (
                 <div key={t.id} className="dist-row">
                   <span className="dist-dot" style={{ background: t.color }} />
                   <span className="dist-name">{t.name.split('—')[0].trim()}</span>
                   <div className="dist-bar-wrap">
-                    <div className="dist-bar" style={{ width: `${pct}%`, background: t.color }} />
+                    <div className="dist-bar" style={{ width: `${risk}%`, background: t.color }} />
                   </div>
-                  <span className="dist-pct">{pct}%</span>
+                  <span className="dist-pct">{risk}</span>
                 </div>
               );
             })}
           </div>
 
           <div className="tier-panel">
-            <h4>🔍 Top Sites</h4>
+            <h4>🔍 Top Signals</h4>
             {hovered != null ? (
               <div className="top-sites-list">
-                {tiers.find(t => t.id === hovered)?.topSites.map((s, i) => (
+                {tiers.find(t => t.id === hovered)?.topSignals.map((s, i) => (
                   <span key={i} className="top-site-chip">{s}</span>
                 ))}
               </div>
             ) : (
-              <p className="panel-hint">Hover a tier to see top sites</p>
+              <p className="panel-hint">Hover a tier to see top scoring signals</p>
             )}
           </div>
         </div>
@@ -250,9 +281,17 @@ export default function TierView({ onSelectTier }) {
 
         .tier-status-badge { font-size: 10px; padding: 2px 8px; border-radius: 6px; font-weight: 600; }
         .tier-status-ready { background: rgba(34,197,94,0.12); color: #22c55e; }
-        .tier-status-pending { background: rgba(255,255,255,0.06); color: #6b6b80; }
+        .tier-phase-badge { font-size: 9px; padding: 2px 8px; border-radius: 6px; font-weight: 600; }
 
-        .tier-metrics { display: flex; align-items: center; gap: 16px; }
+        .tier-metrics { display: flex; align-items: center; gap: 14px; }
+        .tier-score-group { display: flex; gap: 10px; align-items: center; }
+        .tier-score { display: flex; flex-direction: column; align-items: center; min-width: 80px; }
+        .ts-bar-wrap { width: 100%; height: 5px; background: rgba(255,255,255,0.06); border-radius: 3px; overflow: hidden; margin-bottom: 2px; }
+        .ts-bar { height: 100%; border-radius: 3px; transition: width 0.8s ease; }
+        .ts-score-val { font-size: 18px; font-weight: 800; letter-spacing: -0.5px; }
+        .tier-risk-score { min-width: 50px; }
+        .ts-risk-val { font-size: 22px; font-weight: 900; letter-spacing: -1px; }
+        .tier-metric-sep { width: 1px; height: 32px; background: rgba(255,255,255,0.06); flex-shrink: 0; }
         .tier-metric { display: flex; flex-direction: column; align-items: center; min-width: 60px; }
         .tm-val { font-size: 15px; font-weight: 700; letter-spacing: -0.3px; }
         .tm-lbl { font-size: 9px; color: #6b6b80; text-transform: uppercase; letter-spacing: 0.3px; }
@@ -299,9 +338,11 @@ export default function TierView({ onSelectTier }) {
         .coverage-summary { display: flex; gap: 10px; margin-bottom: 10px; }
         .cov-item { flex: 1; text-align: center; padding: 10px 8px; border-radius: 8px; }
         .cov-done { background: rgba(34,197,94,0.08); border: 1px solid rgba(34,197,94,0.15); }
+        .cov-sampling { background: rgba(234,179,8,0.08); border: 1px solid rgba(234,179,8,0.15); }
         .cov-pending { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); }
         .cov-count { display: block; font-size: 22px; font-weight: 700; }
         .cov-done .cov-count { color: #22c55e; }
+        .cov-sampling .cov-count { color: #eab308; }
         .cov-pending .cov-count { color: #6b6b80; }
         .cov-label { font-size: 9px; color: #6b6b80; text-transform: uppercase; letter-spacing: 0.3px; }
         .panel-note { font-size: 11px; color: #6b6b80; line-height: 1.5; }
@@ -317,6 +358,13 @@ export default function TierView({ onSelectTier }) {
         .top-site-chip { font-size: 10px; padding: 3px 8px; background: rgba(99,102,241,0.1); border-radius: 4px; color: #b0b0d0; }
         .panel-hint { font-size: 11px; color: #4a4a60; font-style: italic; }
         .last-scanned { font-size: 10px; color: #4a4a60; display: inline-flex; align-items: center; gap: 4px; }
+
+        /* Model axes panel */
+        .model-axes { display: flex; flex-direction: column; gap: 6px; }
+        .model-axis { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 6px; background: rgba(255,255,255,0.03); }
+        .model-axis-icon { font-size: 14px; }
+        .model-axis-name { font-size: 11px; font-weight: 700; color: #c8c8e0; min-width: 70px; }
+        .model-axis-desc { font-size: 9px; color: #6b6b80; }
       `}</style>
     </div>
   );
