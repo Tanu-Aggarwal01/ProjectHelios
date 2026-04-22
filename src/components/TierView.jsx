@@ -4,7 +4,6 @@ import ManageSitesModal from './ManageSitesModal';
 
 const phaseLabel = (p) => p === 3 ? '✓ Phase 3 — Full Categorization' : p === 2 ? '⏳ Phase 2 — Sampling' : 'Phase 1 — Metadata Only';
 const phaseColor = (p) => p === 3 ? '#22c55e' : p === 2 ? '#eab308' : '#6b6b80';
-const scoreColor = (s) => s >= 70 ? '#ef4444' : s >= 50 ? '#f97316' : s >= 30 ? '#eab308' : '#22c55e';
 
 export default function TierView({ onSelectTier }) {
   const [hovered, setHovered] = useState(null);
@@ -57,13 +56,6 @@ export default function TierView({ onSelectTier }) {
           {tiers.map((tier, i) => {
             const isHovered = hovered === tier.id;
             const isTriggering = triggeringTier === tier.id;
-            const riskScore = Math.round(
-              0.30 * tier.sensitivityScore +
-              0.25 * tier.exposureScore +
-              0.20 * tier.activityRiskScore +
-              0.15 * tier.userRiskScore +
-              0.10 * tier.hygieneRiskScore
-            );
 
             return (
               <div
@@ -95,27 +87,6 @@ export default function TierView({ onSelectTier }) {
                   </div>
 
                   <div className="tier-metrics">
-                    {/* Primary: Sensitivity × Exposure scores */}
-                    <div className="tier-score-group">
-                      <div className="tier-score">
-                        <div className="ts-bar-wrap"><div className="ts-bar" style={{ width: `${tier.sensitivityScore}%`, background: scoreColor(tier.sensitivityScore) }} /></div>
-                        <span className="ts-score-val" style={{ color: scoreColor(tier.sensitivityScore) }}>{tier.sensitivityScore}</span>
-                        <span className="tm-lbl">🔒 Sensitivity</span>
-                      </div>
-                      <div className="tier-score">
-                        <div className="ts-bar-wrap"><div className="ts-bar" style={{ width: `${tier.exposureScore}%`, background: scoreColor(tier.exposureScore) }} /></div>
-                        <span className="ts-score-val" style={{ color: scoreColor(tier.exposureScore) }}>{tier.exposureScore}</span>
-                        <span className="tm-lbl">🌐 Exposure</span>
-                      </div>
-                      <div className="tier-score tier-risk-score">
-                        <span className="ts-risk-val" style={{ color: tier.color }}>{riskScore}</span>
-                        <span className="tm-lbl">⚡ Risk</span>
-                      </div>
-                    </div>
-
-                    <div className="tier-metric-sep" />
-
-                    {/* Secondary: Volume */}
                     <div className="tier-metric">
                       <span className="tm-val">{tier.sites.toLocaleString()}</span>
                       <span className="tm-lbl">Sites</span>
@@ -337,13 +308,6 @@ export default function TierView({ onSelectTier }) {
         .tier-phase-badge { font-size: 9px; padding: 2px 8px; border-radius: 6px; font-weight: 600; }
 
         .tier-metrics { display: flex; align-items: center; gap: 14px; }
-        .tier-score-group { display: flex; gap: 10px; align-items: center; }
-        .tier-score { display: flex; flex-direction: column; align-items: center; min-width: 80px; }
-        .ts-bar-wrap { width: 100%; height: 5px; background: rgba(255,255,255,0.06); border-radius: 3px; overflow: hidden; margin-bottom: 2px; }
-        .ts-bar { height: 100%; border-radius: 3px; transition: width 0.8s ease; }
-        .ts-score-val { font-size: 18px; font-weight: 800; letter-spacing: -0.5px; }
-        .tier-risk-score { min-width: 50px; }
-        .ts-risk-val { font-size: 22px; font-weight: 900; letter-spacing: -1px; }
         .tier-metric-sep { width: 1px; height: 32px; background: rgba(255,255,255,0.06); flex-shrink: 0; }
         .tier-metric { display: flex; flex-direction: column; align-items: center; min-width: 60px; }
         .tm-val { font-size: 15px; font-weight: 700; letter-spacing: -0.3px; }
