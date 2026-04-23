@@ -25,6 +25,10 @@ export default function PostureAgentView() {
     [allSites]
   );
 
+  const [agentSetUp, setAgentSetUp] = useState(false);
+  const [showSetupDialog, setShowSetupDialog] = useState(true);
+  const [activating, setActivating] = useState(false);
+
   const [watchlists, setWatchlists] = useState([
     { id: 'wl-exec', icon: '👔', name: 'Executive Sites', siteCount: 14, cadence: 'Weekly', risks: { unlabeled: 35, overexposed: 22, rot: 18 } },
     { id: 'wl-legal', icon: '⚖️', name: 'Legal & Compliance', siteCount: 8, cadence: 'Daily', risks: { unlabeled: 12, overexposed: 45, rot: 8 } },
@@ -68,8 +72,103 @@ export default function PostureAgentView() {
     setShowManualModal(false);
   }, []);
 
+  const handleStart = () => {
+    setShowSetupDialog(false);
+    setActivating(true);
+    setTimeout(() => {
+      setActivating(false);
+      setAgentSetUp(true);
+    }, 2200);
+  };
+
+  const handleCustomize = () => {
+    setShowSetupDialog(false);
+    setAgentSetUp(true);
+    setShowCreateModal(true);
+  };
+
+  const handleNotNow = () => {
+    setShowSetupDialog(false);
+  };
+
   return (
     <div className="pav-root">
+      {/* ── Setup Dialog (shown when agent not set up) ── */}
+      {showSetupDialog && !agentSetUp && (
+        <div className="pav-setup-overlay">
+          <div className="pav-setup-dialog">
+            <button className="pav-setup-close" onClick={handleNotNow}>✕</button>
+            <h2 className="pav-setup-title">SharePoint posture analysis is now available</h2>
+
+            <div className="pav-setup-hero">
+              <div className="pav-setup-hero-icon">
+                <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+                  <rect width="48" height="48" rx="12" fill="url(#setup-lg)" />
+                  <rect x="10" y="10" width="10" height="10" rx="2" fill="white" opacity="0.9"/>
+                  <rect x="22" y="10" width="10" height="10" rx="2" fill="white" opacity="0.9"/>
+                  <rect x="10" y="22" width="10" height="10" rx="2" fill="white" opacity="0.9"/>
+                  <circle cx="27" cy="27" r="6" fill="white" opacity="0.9"/>
+                  <defs><linearGradient id="setup-lg" x1="0" y1="0" x2="48" y2="48"><stop stopColor="#6366f1"/><stop offset="1" stopColor="#8b5cf6"/></linearGradient></defs>
+                </svg>
+              </div>
+            </div>
+
+            <p className="pav-setup-desc">
+              Posture Agent in DSPM now analyzes SharePoint sites for activity, access, and sensitive data signals, revealing risk insights and recommending next steps.{' '}
+              <a href="#" className="pav-setup-link">Learn more about this agent</a>
+            </p>
+
+            <div className="pav-setup-settings">
+              <p className="pav-setup-settings-title">Review default analysis settings:</p>
+              <ul className="pav-setup-list">
+                <li><strong>Scope:</strong> agent automatically selects sites based on existing Insider Risk Management and Data Loss Prevention policies, and tenant industry profile.</li>
+                <li><strong>Security focus:</strong> agent determines which security concerns to track based on risk signals across data, access, and activity.</li>
+                <li><strong>Scan schedule:</strong> agent runs weekly to evaluate posture.</li>
+              </ul>
+            </div>
+
+            <a href="#" className="pav-setup-link pav-setup-perms">View agent permissions</a>
+
+            <div className="pav-setup-actions">
+              <button className="pav-setup-customize" onClick={handleCustomize}>Customize</button>
+              <button className="pav-setup-start" onClick={handleStart}>Start</button>
+              <button className="pav-setup-notnow" onClick={handleNotNow}>Not now</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Activating Overlay ── */}
+      {activating && (
+        <div className="pav-activating-overlay">
+          <div className="pav-activating-card">
+            <div className="pav-activating-spinner" />
+            <h3>✨ Setting up Posture Agent</h3>
+            <p>Creating agentic identity and analyzing your SharePoint data estate…</p>
+            <div className="pav-activating-steps">
+              <div className="pav-act-step pav-act-done"><span className="pav-act-dot pav-act-dot-done" />Creating agentic identity</div>
+              <div className="pav-act-step pav-act-active"><span className="pav-act-dot pav-act-dot-active" />Discovering sites with sensitive data</div>
+              <div className="pav-act-step"><span className="pav-act-dot" />Selecting top sites for analysis</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Not Set Up Empty State ── */}
+      {!agentSetUp && !showSetupDialog && !activating && (
+        <div className="pav-empty">
+          <div className="pav-empty-inner">
+            <span className="pav-empty-icon">🛡️</span>
+            <h3>Posture Agent is not set up</h3>
+            <p>Set up the Posture Agent to analyze your SharePoint sites for security posture risks.</p>
+            <button className="pav-setup-start" onClick={() => setShowSetupDialog(true)}>Set up Posture Agent</button>
+          </div>
+        </div>
+      )}
+
+      {/* ── Active Agent View ── */}
+      {agentSetUp && !activating && (
+        <>
       {/* Header */}
       <div className="pav-header">
         <h2 className="pav-title">Posture Agent</h2>
@@ -159,6 +258,8 @@ export default function PostureAgentView() {
           </div>
         )}
       </section>
+        </>
+      )}
 
       {/* Modals */}
       {showCreateModal && (
@@ -198,6 +299,114 @@ export default function PostureAgentView() {
 
       <style>{`
         .pav-root {
+          height: 100%; overflow-y: auto; padding: 24px 32px 48px; position: relative;
+        }
+
+        /* ── Setup Dialog ── */
+        .pav-setup-overlay {
+          position: fixed; inset: 0; z-index: 200;
+          background: rgba(0,0,0,0.5); backdrop-filter: blur(8px);
+          display: flex; align-items: center; justify-content: center;
+          animation: pavFadeIn .2s ease;
+        }
+        @keyframes pavFadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .pav-setup-dialog {
+          width: 520px; max-width: 92vw; max-height: 85vh; overflow-y: auto;
+          background: #1e1e2e; border: 1px solid rgba(255,255,255,0.1);
+          border-radius: 12px; padding: 28px 32px;
+          box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+          animation: pavScaleIn .25s ease;
+          position: relative;
+        }
+        @keyframes pavScaleIn { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: scale(1); } }
+        .pav-setup-close {
+          position: absolute; top: 16px; right: 16px;
+          background: none; border: none; color: #6b6b80; font-size: 18px;
+          cursor: pointer; transition: color .15s;
+        }
+        .pav-setup-close:hover { color: white; }
+        .pav-setup-title { font-size: 18px; font-weight: 700; margin: 0 0 16px; color: #e0e0f0; letter-spacing: -0.3px; }
+
+        .pav-setup-hero {
+          background: linear-gradient(135deg, #e8e0f0 0%, #c4d4f0 50%, #d0e8e0 100%);
+          border-radius: 10px; padding: 32px; display: flex; align-items: center; justify-content: center;
+          margin-bottom: 18px;
+        }
+        .pav-setup-hero-icon { filter: drop-shadow(0 4px 12px rgba(99,102,241,0.3)); }
+
+        .pav-setup-desc { font-size: 13px; color: #a0a0b8; line-height: 1.6; margin: 0 0 18px; }
+        .pav-setup-link { color: #818cf8; text-decoration: none; font-weight: 500; }
+        .pav-setup-link:hover { text-decoration: underline; }
+        .pav-setup-perms { display: block; margin-bottom: 20px; font-size: 13px; }
+
+        .pav-setup-settings { margin-bottom: 16px; }
+        .pav-setup-settings-title { font-size: 13px; font-weight: 600; color: #c0c0d8; margin: 0 0 8px; }
+        .pav-setup-list {
+          margin: 0; padding: 0 0 0 18px; font-size: 12px; color: #a0a0b8; line-height: 1.7;
+        }
+        .pav-setup-list li { margin-bottom: 4px; }
+        .pav-setup-list strong { color: #c8c8e0; }
+
+        .pav-setup-actions { display: flex; gap: 10px; align-items: center; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.06); }
+        .pav-setup-customize {
+          padding: 9px 20px; border-radius: 8px; font-size: 13px; font-weight: 500;
+          background: none; border: 1px solid rgba(255,255,255,0.15); color: #c0c0d8;
+          cursor: pointer; font-family: inherit; transition: all .15s;
+        }
+        .pav-setup-customize:hover { background: rgba(255,255,255,0.06); color: white; }
+        .pav-setup-start {
+          padding: 9px 28px; border-radius: 8px; font-size: 13px; font-weight: 600;
+          background: #4a6cf7; border: none; color: white;
+          cursor: pointer; font-family: inherit; transition: all .15s;
+        }
+        .pav-setup-start:hover { background: #5b7cf8; }
+        .pav-setup-notnow {
+          padding: 9px 20px; border-radius: 8px; font-size: 13px; font-weight: 500;
+          background: none; border: 1px solid rgba(255,255,255,0.1); color: #6b6b80;
+          cursor: pointer; font-family: inherit; transition: all .15s;
+        }
+        .pav-setup-notnow:hover { background: rgba(255,255,255,0.04); color: #a0a0b8; }
+
+        /* ── Activating Overlay ── */
+        .pav-activating-overlay {
+          position: fixed; inset: 0; z-index: 200;
+          background: rgba(7,7,15,0.85); backdrop-filter: blur(16px);
+          display: flex; align-items: center; justify-content: center;
+          animation: pavFadeIn 0.3s ease;
+        }
+        .pav-activating-card {
+          text-align: center; padding: 40px 48px; border-radius: 20px;
+          background: rgba(255,255,255,0.04); border: 1px solid rgba(99,102,241,0.25);
+          box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        }
+        .pav-activating-spinner {
+          width: 40px; height: 40px; margin: 0 auto 16px;
+          border: 3px solid rgba(99,102,241,0.2); border-top-color: #8b5cf6;
+          border-radius: 50%; animation: pavSpin 0.8s linear infinite;
+        }
+        @keyframes pavSpin { to { transform: rotate(360deg); } }
+        .pav-activating-card h3 { font-size: 18px; font-weight: 700; margin-bottom: 6px; color: #e0e0ff; }
+        .pav-activating-card p { font-size: 13px; color: #8888a0; margin-bottom: 20px; }
+        .pav-activating-steps { display: flex; flex-direction: column; gap: 8px; text-align: left; }
+        .pav-act-step { display: flex; align-items: center; gap: 10px; font-size: 12px; color: #4a4a60; }
+        .pav-act-done { color: #22c55e; }
+        .pav-act-active { color: #a5b4fc; }
+        .pav-act-dot { width: 8px; height: 8px; border-radius: 50%; background: #2a2a3a; flex-shrink: 0; }
+        .pav-act-dot-done { background: #22c55e; box-shadow: 0 0 6px rgba(34,197,94,0.4); }
+        .pav-act-dot-active { background: #8b5cf6; box-shadow: 0 0 6px rgba(139,92,246,0.4); animation: pavPulse 1.5s infinite; }
+        @keyframes pavPulse { 0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(139,92,246,.4)} 50%{opacity:.8;box-shadow:0 0 0 4px rgba(139,92,246,0)} }
+
+        /* ── Empty State ── */
+        .pav-empty {
+          height: 100%; display: flex; align-items: center; justify-content: center;
+        }
+        .pav-empty-inner {
+          text-align: center; padding: 48px; border-radius: 16px;
+          background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);
+        }
+        .pav-empty-icon { font-size: 48px; display: block; margin-bottom: 16px; }
+        .pav-empty-inner h3 { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+        .pav-empty-inner p { font-size: 13px; color: #6b6b80; margin-bottom: 20px; }
           padding: 28px 36px; overflow-y: auto; height: 100%;
           scrollbar-width: thin; scrollbar-color: #2a2a3a transparent;
         }
