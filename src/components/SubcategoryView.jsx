@@ -646,11 +646,45 @@ export default function SubcategoryView({ tier, category, selectedSub, onSelectS
 
               {quickAction.type === 'label' && (
                 <>
-                  <p>Apply the sensitivity label <strong>{quickAction.cat.name}_LABEL</strong> to all <strong>{formatNumber(Math.round(quickAction.cat.documentCount * quickAction.cat.classificationRisk / 100))}</strong> unlabeled files across all {formatNumber(quickAction.cat.siteCount)} sites in this category.</p>
-                  <div className="cd-qa-impact">
-                    <div><span>📄 Files to label</span><strong>{formatNumber(Math.round(quickAction.cat.documentCount * quickAction.cat.classificationRisk / 100))}</strong></div>
-                    <div><span>📍 Sites affected</span><strong>{formatNumber(quickAction.cat.siteCount)}</strong></div>
-                    <div><span>🏷️ Label</span><strong>{quickAction.cat.name}_LABEL</strong></div>
+                  <p>Choose how to label <strong>{formatNumber(Math.round(quickAction.cat.documentCount * quickAction.cat.classificationRisk / 100))}</strong> unlabeled files across {formatNumber(quickAction.cat.siteCount)} sites in <strong>{quickAction.cat.name}</strong>.</p>
+
+                  <div className="cd-qa-option-cards">
+                    <div className="cd-qa-option-card">
+                      <div className="cd-qa-opt-header">
+                        <span className="cd-qa-opt-icon">🏷️</span>
+                        <div>
+                          <strong>Apply an existing sensitivity label</strong>
+                          <span className="cd-qa-opt-desc">Choose from your published labels to apply to all unlabeled files</span>
+                        </div>
+                      </div>
+                      <div className="cd-qa-label-grid">
+                        {['General', 'Confidential', 'Highly Confidential', 'Restricted'].map(l => (
+                          <button key={l} className="cd-qa-label-btn">{l}</button>
+                        ))}
+                      </div>
+                      <div className="cd-qa-impact">
+                        <div><span>📄 Files to label</span><strong>{formatNumber(Math.round(quickAction.cat.documentCount * quickAction.cat.classificationRisk / 100))}</strong></div>
+                        <div><span>📍 Sites affected</span><strong>{formatNumber(quickAction.cat.siteCount)}</strong></div>
+                      </div>
+                    </div>
+
+                    <div className="cd-qa-option-divider"><span>OR</span></div>
+
+                    <div className="cd-qa-option-card">
+                      <div className="cd-qa-opt-header">
+                        <span className="cd-qa-opt-icon">✨</span>
+                        <div>
+                          <strong>Create a classifier & auto-label</strong>
+                          <span className="cd-qa-opt-desc">Build an AI classifier from this category's content and auto-apply labels based on classification confidence</span>
+                        </div>
+                      </div>
+                      <div className="cd-qa-autolabel-steps">
+                        <div className="cd-qa-al-step"><span className="cd-qa-al-num">1</span>Create a trainable classifier from <strong>{quickAction.cat.name}</strong> content</div>
+                        <div className="cd-qa-al-step"><span className="cd-qa-al-num">2</span>Classifier evaluates all unlabeled files for match confidence</div>
+                        <div className="cd-qa-al-step"><span className="cd-qa-al-num">3</span>Auto-apply labels when confidence exceeds threshold</div>
+                      </div>
+                      <button className="cd-qa-autolabel-btn">Create Classifier & Auto-Label →</button>
+                    </div>
                   </div>
                 </>
               )}
@@ -765,9 +799,26 @@ export default function SubcategoryView({ tier, category, selectedSub, onSelectS
         .cd-qa-cancel{padding:8px 14px;border-radius:8px;font-size:12px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:#a0a0b8;cursor:pointer;font-family:inherit;transition:all .15s}
         .cd-qa-cancel:hover{background:rgba(255,255,255,0.1)}
 
-
-
-        .stt-readiness { display:flex; flex-direction:column; gap:2px; margin-bottom:6px; padding:4px 6px; background:rgba(255,255,255,0.02); border-radius:5px; }
+        /* Label option cards */
+        .cd-qa-option-cards{display:flex;flex-direction:column;gap:0}
+        .cd-qa-option-card{padding:16px;border-radius:10px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);transition:all .2s}
+        .cd-qa-option-card:hover{background:rgba(255,255,255,0.05);border-color:rgba(99,102,241,0.15)}
+        .cd-qa-opt-header{display:flex;gap:10px;align-items:flex-start;margin-bottom:12px}
+        .cd-qa-opt-icon{font-size:20px}
+        .cd-qa-opt-header strong{font-size:13px;color:#e0e0f0;display:block}
+        .cd-qa-opt-desc{font-size:11px;color:#6b6b80;display:block;margin-top:2px}
+        .cd-qa-label-grid{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+        .cd-qa-label-btn{padding:7px 16px;border-radius:7px;font-size:12px;font-weight:600;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);color:#c0c0d8;cursor:pointer;font-family:inherit;transition:all .15s}
+        .cd-qa-label-btn:hover{background:rgba(99,102,241,0.12);border-color:#6366f1;color:#e0e0ff;box-shadow:0 0 10px rgba(99,102,241,0.15)}
+        .cd-qa-option-divider{display:flex;align-items:center;gap:12px;padding:8px 0}
+        .cd-qa-option-divider::before,.cd-qa-option-divider::after{content:'';flex:1;height:1px;background:rgba(255,255,255,0.06)}
+        .cd-qa-option-divider span{font-size:10px;color:#4a4a60;font-weight:600;text-transform:uppercase;letter-spacing:1px}
+        .cd-qa-autolabel-steps{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
+        .cd-qa-al-step{display:flex;align-items:flex-start;gap:10px;font-size:12px;color:#a0a0b8;line-height:1.4}
+        .cd-qa-al-step strong{color:#c8c8e0}
+        .cd-qa-al-num{width:20px;height:20px;border-radius:50%;background:rgba(99,102,241,0.15);color:#818cf8;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+        .cd-qa-autolabel-btn{padding:9px 18px;border-radius:8px;font-size:12px;font-weight:600;background:linear-gradient(135deg,rgba(139,92,246,0.15),rgba(99,102,241,0.15));border:1px solid rgba(139,92,246,0.3);color:#c4b5fd;cursor:pointer;font-family:inherit;transition:all .15s}
+        .cd-qa-autolabel-btn:hover{background:linear-gradient(135deg,rgba(139,92,246,0.25),rgba(99,102,241,0.25));color:white;border-color:#8b5cf6}        .stt-readiness { display:flex; flex-direction:column; gap:2px; margin-bottom:6px; padding:4px 6px; background:rgba(255,255,255,0.02); border-radius:5px; }
         .stt-ri { display:flex; align-items:center; gap:4px; }
         .stt-ri-lbl { font-size:7px; color:#6b6b80; width:55px; flex-shrink:0; text-transform:uppercase; letter-spacing:.3px; }
         .stt-ri-bar-w { flex:1; height:3px; background:rgba(255,255,255,0.06); border-radius:2px; overflow:hidden; }
