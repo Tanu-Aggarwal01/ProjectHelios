@@ -59,7 +59,7 @@ export default function HomePage({ onSelectWorkload }) {
       {/* ── Data Snapshot Section ── */}
       <section className="hp-snapshot">
         <div className="hp-snapshot-header">
-          <h3 className="hp-snapshot-title">📊 Data Snapshot</h3>
+          <h3 className="hp-snapshot-title">🚀 Get your data estate ready for AI</h3>
           <span className="last-scanned">🔄 Last scanned: {lastScannedLabel}</span>
         </div>
 
