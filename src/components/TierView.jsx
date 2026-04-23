@@ -5,11 +5,20 @@ import ManageSitesModal from './ManageSitesModal';
 const phaseLabel = (p) => p === 3 ? '✓ Phase 3 — Full Categorization' : p === 2 ? '⏳ Phase 2 — Sampling' : 'Phase 1 — Metadata Only';
 const phaseColor = (p) => p === 3 ? '#22c55e' : p === 2 ? '#eab308' : '#6b6b80';
 
+const defaultWatchlists = [
+  { id: 'wl-exec', name: 'Executive Sites', icon: '👔', cadence: 'Weekly', siteCount: 14, sites: ['Executive Portal', 'Board Materials', 'M&A War Room', 'Strategy Planning', 'Investor Relations'], unlabeled: 18, overexposed: 35, rot: 5 },
+  { id: 'wl-legal', name: 'Legal & Compliance', icon: '⚖️', cadence: 'Daily', siteCount: 8, sites: ['Legal Central', 'Compliance Archives', 'Contract Management', 'Risk & Audit'], unlabeled: 22, overexposed: 12, rot: 28 },
+];
+
 export default function TierView({ onSelectTier }) {
   const [hovered, setHovered] = useState(null);
   const [triggeringTier, setTriggeringTier] = useState(null);
   const [showManageSites, setShowManageSites] = useState(false);
-  const [managedSites, setManagedSites] = useState(null);
+  const [watchlists, setWatchlists] = useState(defaultWatchlists);
+  const [creatingWatchlist, setCreatingWatchlist] = useState(false);
+  const [newWlName, setNewWlName] = useState('');
+  const [newWlCadence, setNewWlCadence] = useState('Weekly');
+  const [pendingSiteIds, setPendingSiteIds] = useState(null);
 
   const handleTierClick = (tier) => {
     if (tier.categorized) {
@@ -32,15 +41,7 @@ export default function TierView({ onSelectTier }) {
             <span className="tier-agent-dot" />
             <span className="tier-agent-text">✨ Posture Agent is active</span>
             <span className="tier-agent-sub">Agentic identity enabled — analyzing your SharePoint data estate</span>
-            <button className="tier-manage-btn" onClick={() => setShowManageSites(true)}>📋 Manage Sites</button>
           </div>
-          {managedSites && (
-            <div className="tier-managed-banner">
-              <span>✅ {managedSites.length} sites manually selected for assessment</span>
-              <button className="tier-managed-edit" onClick={() => setShowManageSites(true)}>Edit</button>
-              <button className="tier-managed-clear" onClick={() => setManagedSites(null)}>Clear</button>
-            </div>
-          )}
           <p>We've identified <strong>{tierSummary.totalSites.toLocaleString()}</strong> SharePoint sites and grouped them into <strong>{tiers.length} tiers</strong> based on <strong>Sensitivity × Exposure</strong> — prioritizing sites where critical data meets broad access.</p>
           <span className="last-scanned">🔄 Last scanned: {lastScannedLabel}</span>
         </div>
@@ -143,9 +144,49 @@ export default function TierView({ onSelectTier }) {
               </div>
             );
           })}
-        </div>
 
-        {/* Side panel — summary */}
+          {/* ── Watchlists Section ── */}
+          <div className="wl-section-header">
+            <h3 className="wl-section-title">📋 Watchlists</h3>
+            <span className="wl-section-sub">Admin-curated site groups with custom scan cadence</span>
+            <button className="wl-create-btn" onClick={() => setShowManageSites(true)}>+ Create Watchlist</button>
+          </div>
+
+          {watchlists.map(wl => (
+            <div key={wl.id} className="wl-card">
+              <div className="wl-card-top">
+                <span className="wl-card-icon">{wl.icon}</span>
+                <div className="wl-card-title-wrap">
+                  <span className="wl-card-name">{wl.name}</span>
+                  <span className="wl-card-meta">{wl.siteCount} sites · {wl.sites.slice(0, 3).join(', ')}{wl.siteCount > 3 ? `, +${wl.siteCount - 3} more` : ''}</span>
+                </div>
+                <span className="wl-cadence-badge">{wl.cadence}</span>
+              </div>
+              <div className="wl-card-risks">
+                <div className="wl-card-risk">
+                  <div className="wl-cr-bar-w"><div className="wl-cr-bar" style={{ width: `${wl.unlabeled}%`, background: readinessColor(wl.unlabeled) }} /></div>
+                  <span className="wl-cr-val" style={{ color: readinessColor(wl.unlabeled) }}>{wl.unlabeled}%</span>
+                  <span className="wl-cr-lbl">Unlabeled</span>
+                </div>
+                <div className="wl-card-risk">
+                  <div className="wl-cr-bar-w"><div className="wl-cr-bar" style={{ width: `${wl.overexposed}%`, background: readinessColor(wl.overexposed) }} /></div>
+                  <span className="wl-cr-val" style={{ color: readinessColor(wl.overexposed) }}>{wl.overexposed}%</span>
+                  <span className="wl-cr-lbl">Overexposed</span>
+                </div>
+                <div className="wl-card-risk">
+                  <div className="wl-cr-bar-w"><div className="wl-cr-bar" style={{ width: `${wl.rot}%`, background: readinessColor(wl.rot) }} /></div>
+                  <span className="wl-cr-val" style={{ color: readinessColor(wl.rot) }}>{wl.rot}%</span>
+                  <span className="wl-cr-lbl">ROT</span>
+                </div>
+              </div>
+              <div className="wl-card-actions">
+                <button className="wl-card-explore">Explore →</button>
+                <button className="wl-card-edit">Edit</button>
+                <button className="wl-card-delete" onClick={() => setWatchlists(prev => prev.filter(w => w.id !== wl.id))}>Remove</button>
+              </div>
+            </div>
+          ))}
+        </div>
         <div className="tier-side">
           <div className="tier-panel">
             <h4>🎯 Tiering Model</h4>
@@ -215,12 +256,55 @@ export default function TierView({ onSelectTier }) {
 
       {showManageSites && (
         <ManageSitesModal
-          onClose={() => setShowManageSites(false)}
+          onClose={() => { setShowManageSites(false); setCreatingWatchlist(false); }}
           onConfirm={(siteIds) => {
-            setManagedSites(siteIds);
+            setPendingSiteIds(siteIds);
             setShowManageSites(false);
+            setCreatingWatchlist(true);
           }}
         />
+      )}
+
+      {/* Create Watchlist dialog */}
+      {creatingWatchlist && (
+        <div className="cwl-overlay" onClick={() => setCreatingWatchlist(false)}>
+          <div className="cwl-modal" onClick={e => e.stopPropagation()}>
+            <h3>Create Watchlist</h3>
+            <p className="cwl-desc">{pendingSiteIds?.length} sites selected</p>
+
+            <label className="cwl-label">Watchlist name</label>
+            <input className="cwl-input" value={newWlName} onChange={e => setNewWlName(e.target.value)} placeholder="e.g. Executive Sites" />
+
+            <label className="cwl-label">Scan cadence</label>
+            <div className="cwl-cadence-row">
+              {['Daily', 'Weekly', 'Monthly', 'On-demand'].map(c => (
+                <button key={c} className={`cwl-cad-btn ${newWlCadence === c ? 'cwl-cad-active' : ''}`} onClick={() => setNewWlCadence(c)}>{c}</button>
+              ))}
+            </div>
+
+            <div className="cwl-actions">
+              <button className="cwl-create" disabled={!newWlName.trim()} onClick={() => {
+                const icons = ['📌', '🔍', '🛡️', '📊', '⭐', '🏷️'];
+                setWatchlists(prev => [...prev, {
+                  id: `wl-${Date.now()}`,
+                  name: newWlName.trim(),
+                  icon: icons[Math.floor(Math.random() * icons.length)],
+                  cadence: newWlCadence,
+                  siteCount: pendingSiteIds.length,
+                  sites: pendingSiteIds.slice(0, 5),
+                  unlabeled: Math.round(Math.random() * 40 + 10),
+                  overexposed: Math.round(Math.random() * 30 + 5),
+                  rot: Math.round(Math.random() * 35 + 5),
+                }]);
+                setCreatingWatchlist(false);
+                setNewWlName('');
+                setNewWlCadence('Weekly');
+                setPendingSiteIds(null);
+              }}>Create Watchlist</button>
+              <button className="cwl-cancel" onClick={() => setCreatingWatchlist(false)}>Cancel</button>
+            </div>
+          </div>
+        </div>
       )}
 
       <style>{`
@@ -249,20 +333,6 @@ export default function TierView({ onSelectTier }) {
           cursor: pointer; font-family: inherit; transition: all .15s; white-space: nowrap;
         }
         .tier-manage-btn:hover { background: rgba(99,102,241,0.2); color: white; }
-
-        .tier-managed-banner {
-          display: flex; align-items: center; gap: 10px; margin-bottom: 8px;
-          padding: 7px 14px; border-radius: 8px;
-          background: rgba(99,102,241,0.08); border: 1px solid rgba(99,102,241,0.2);
-          font-size: 12px; color: #a5b4fc;
-        }
-        .tier-managed-edit, .tier-managed-clear {
-          font-size: 10px; background: none; border: 1px solid rgba(255,255,255,0.1);
-          color: #8888a0; border-radius: 4px; padding: 2px 8px; cursor: pointer;
-          font-family: inherit; transition: all .15s;
-        }
-        .tier-managed-edit:hover { color: #a5b4fc; border-color: rgba(99,102,241,0.3); }
-        .tier-managed-clear:hover { color: #ef4444; border-color: rgba(239,68,68,0.3); }
         .tier-stats { display: flex; gap: 20px; }
         .ts { text-align: center; padding: 8px 18px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; }
         .ts-val { display: block; font-size: 20px; font-weight: 700; letter-spacing: -0.5px; }
@@ -383,6 +453,105 @@ export default function TierView({ onSelectTier }) {
         .model-axis-name { font-size: 11px; font-weight: 700; color: #c8c8e0; flex: 1; }
         .model-axis-wt { font-size: 10px; font-weight: 700; color: #6366f1; }
         .model-axis-desc { font-size: 9px; color: #6b6b80; }
+
+        /* Watchlists section */
+        .wl-section-header {
+          display: flex; align-items: center; gap: 10px; margin-top: 16px; margin-bottom: 10px;
+          padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.06);
+        }
+        .wl-section-title { font-size: 15px; font-weight: 700; margin: 0; letter-spacing: -0.3px; }
+        .wl-section-sub { font-size: 11px; color: #6b6b80; flex: 1; }
+        .wl-create-btn {
+          font-size: 11px; font-weight: 600; color: #a5b4fc; background: rgba(99,102,241,0.1);
+          border: 1px solid rgba(99,102,241,0.25); border-radius: 6px; padding: 5px 12px;
+          cursor: pointer; font-family: inherit; transition: all .15s; white-space: nowrap;
+        }
+        .wl-create-btn:hover { background: rgba(99,102,241,0.2); color: white; }
+
+        .wl-card {
+          border-radius: 10px; padding: 14px 16px; margin-bottom: 8px;
+          background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);
+          transition: all .2s;
+        }
+        .wl-card:hover { background: rgba(255,255,255,0.05); border-color: rgba(99,102,241,0.2); }
+        .wl-card-top { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 10px; }
+        .wl-card-icon { font-size: 20px; }
+        .wl-card-title-wrap { flex: 1; }
+        .wl-card-name { font-size: 14px; font-weight: 700; display: block; letter-spacing: -0.2px; }
+        .wl-card-meta { font-size: 10px; color: #6b6b80; display: block; margin-top: 2px; }
+        .wl-cadence-badge {
+          font-size: 10px; font-weight: 600; padding: 3px 10px; border-radius: 12px;
+          background: rgba(99,102,241,0.1); color: #818cf8; border: 1px solid rgba(99,102,241,0.2);
+        }
+
+        .wl-card-risks { display: flex; gap: 12px; margin-bottom: 10px; }
+        .wl-card-risk { flex: 1; display: flex; flex-direction: column; align-items: center; }
+        .wl-cr-bar-w { width: 100%; height: 3px; background: rgba(255,255,255,0.06); border-radius: 2px; overflow: hidden; margin-bottom: 2px; }
+        .wl-cr-bar { height: 100%; border-radius: 2px; transition: width 0.6s ease; }
+        .wl-cr-val { font-size: 11px; font-weight: 700; }
+        .wl-cr-lbl { font-size: 8px; color: #6b6b80; text-transform: uppercase; letter-spacing: 0.3px; }
+
+        .wl-card-actions { display: flex; gap: 6px; }
+        .wl-card-explore {
+          font-size: 11px; font-weight: 600; padding: 4px 12px; border-radius: 6px;
+          background: linear-gradient(135deg, rgba(99,102,241,0.15), rgba(139,92,246,0.15));
+          border: 1px solid rgba(99,102,241,0.3); color: #a5b4fc;
+          cursor: pointer; font-family: inherit; transition: all .15s;
+        }
+        .wl-card-explore:hover { background: linear-gradient(135deg, rgba(99,102,241,0.25), rgba(139,92,246,0.25)); color: white; }
+        .wl-card-edit, .wl-card-delete {
+          font-size: 10px; padding: 4px 10px; border-radius: 5px;
+          background: none; border: 1px solid rgba(255,255,255,0.08);
+          color: #6b6b80; cursor: pointer; font-family: inherit; transition: all .15s;
+        }
+        .wl-card-edit:hover { color: #a5b4fc; border-color: rgba(99,102,241,0.2); }
+        .wl-card-delete:hover { color: #ef4444; border-color: rgba(239,68,68,0.2); }
+
+        /* Create Watchlist dialog */
+        .cwl-overlay {
+          position: fixed; inset: 0; z-index: 300; background: rgba(0,0,0,0.6);
+          backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center;
+          animation: msIn .2s ease;
+        }
+        .cwl-modal {
+          width: 400px; padding: 28px; border-radius: 14px;
+          background: #1a1a2e; border: 1px solid rgba(99,102,241,0.25);
+          box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        }
+        .cwl-modal h3 { font-size: 17px; font-weight: 700; margin: 0 0 4px; }
+        .cwl-desc { font-size: 12px; color: #6b6b80; margin: 0 0 18px; }
+        .cwl-label { font-size: 11px; font-weight: 600; color: #8888a0; display: block; margin-bottom: 5px; }
+        .cwl-input {
+          width: 100%; padding: 9px 12px; border-radius: 8px; font-size: 13px;
+          background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+          color: #e0e0f0; font-family: inherit; margin-bottom: 16px; box-sizing: border-box;
+        }
+        .cwl-input:focus { outline: none; border-color: #6366f1; }
+        .cwl-cadence-row { display: flex; gap: 6px; margin-bottom: 20px; }
+        .cwl-cad-btn {
+          flex: 1; padding: 7px 6px; border-radius: 7px; font-size: 12px; font-weight: 500;
+          background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+          color: #8888a0; cursor: pointer; font-family: inherit; transition: all .15s;
+        }
+        .cwl-cad-btn:hover { background: rgba(255,255,255,0.07); }
+        .cwl-cad-active {
+          background: rgba(99,102,241,0.12); border-color: #6366f1; color: #e0e0ff;
+          box-shadow: 0 0 10px rgba(99,102,241,0.15);
+        }
+        .cwl-actions { display: flex; gap: 10px; }
+        .cwl-create {
+          padding: 9px 20px; border-radius: 8px; font-size: 13px; font-weight: 600;
+          background: #4a6cf7; border: none; color: white;
+          cursor: pointer; font-family: inherit; transition: all .15s;
+        }
+        .cwl-create:hover:not(:disabled) { background: #5b7cf8; }
+        .cwl-create:disabled { opacity: 0.4; cursor: default; }
+        .cwl-cancel {
+          padding: 9px 16px; border-radius: 8px; font-size: 13px;
+          background: none; border: 1px solid rgba(255,255,255,0.1);
+          color: #a0a0b8; cursor: pointer; font-family: inherit;
+        }
+        .cwl-cancel:hover { background: rgba(255,255,255,0.05); }
       `}</style>
     </div>
   );
