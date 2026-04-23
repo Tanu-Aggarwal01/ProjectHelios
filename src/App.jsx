@@ -6,13 +6,33 @@ import CategoryView from './components/CategoryView';
 import SubcategoryView from './components/SubcategoryView';
 import FileGraph from './components/FileGraph';
 import TopicGraph from './components/TopicGraph';
+import PostureAgentView from './components/PostureAgentView';
 
-const views = { HOME: 'home', WORKLOADS: 'workloads', TIERS: 'tiers', CATEGORIES: 'categories', SUBCATEGORIES: 'subcategories', FILE_GRAPH: 'file-graph', TOPIC_GRAPH: 'topic-graph' };
+const views = { HOME: 'home', WORKLOADS: 'workloads', TIERS: 'tiers', CATEGORIES: 'categories', SUBCATEGORIES: 'subcategories', FILE_GRAPH: 'file-graph', TOPIC_GRAPH: 'topic-graph', POSTURE_AGENT: 'posture-agent', PLACEHOLDER: 'placeholder' };
+
+/* Left-nav items */
+const navItems = [
+  {
+    id: 'posture', label: 'Posture', icon: '🛡️', expandable: true,
+    children: [
+      { id: 'overview', label: 'Overview', view: views.HOME },
+      { id: 'posture-agent', label: 'Posture Agent', view: views.POSTURE_AGENT },
+    ],
+  },
+  { id: 'objectives', label: 'Objectives', icon: '🎯', view: views.PLACEHOLDER },
+  { id: 'ai-observability', label: 'AI observability', icon: '🤖', view: views.PLACEHOLDER },
+  { id: 'discover', label: 'Discover', icon: '🔍', expandable: true, children: [] },
+  { id: 'tasks-actions', label: 'Tasks and actions', icon: '✅', expandable: true, children: [] },
+  { id: 'reports', label: 'Reports', icon: '📊', view: views.PLACEHOLDER },
+];
 
 export default function App() {
   const [nav, setNav] = useState({ view: views.HOME, workload: null, tier: null, category: null, subcategory: null, file: null, topicLabel: null });
   const [transitioning, setTransitioning] = useState(false);
   const [agentActivating, setAgentActivating] = useState(false);
+  const [expandedSections, setExpandedSections] = useState({ posture: true });
+  const [activeNavId, setActiveNavId] = useState('overview');
+  const [placeholderLabel, setPlaceholderLabel] = useState('');
 
   const go = useCallback((next) => {
     setTransitioning(true);
@@ -22,10 +42,30 @@ export default function App() {
     }, 300);
   }, []);
 
-  const goHome           = ()       => go({ view: views.HOME, workload: null, tier: null, category: null, subcategory: null, file: null, topicLabel: null });
+  const goHome = () => {
+    setActiveNavId('overview');
+    go({ view: views.HOME, workload: null, tier: null, category: null, subcategory: null, file: null, topicLabel: null });
+  };
+
+  const handleNavClick = (item) => {
+    if (item.view === views.PLACEHOLDER) {
+      setActiveNavId(item.id);
+      setPlaceholderLabel(item.label);
+      go({ view: views.PLACEHOLDER, workload: null, tier: null, category: null, subcategory: null, file: null, topicLabel: null });
+    } else if (item.view === views.HOME) {
+      goHome();
+    } else if (item.view === views.POSTURE_AGENT) {
+      setActiveNavId('posture-agent');
+      go({ view: views.POSTURE_AGENT, workload: null, tier: null, category: null, subcategory: null, file: null, topicLabel: null });
+    }
+  };
+
+  const toggleSection = (id) => {
+    setExpandedSections(prev => ({ ...prev, [id]: !prev[id] }));
+  };
 
   const breadcrumbs = [];
-  if (nav.view !== views.HOME) breadcrumbs.push({ label: 'Home', onClick: goHome });
+  if (nav.view !== views.HOME && nav.view !== views.POSTURE_AGENT && nav.view !== views.PLACEHOLDER) breadcrumbs.push({ label: 'Home', onClick: goHome });
   if (nav.workload && nav.view !== views.HOME) breadcrumbs.push({ label: 'Microsoft 365', onClick: goHome });
   if (nav.workload && nav.view !== views.HOME && nav.view !== views.TIERS) breadcrumbs.push({ label: nav.workload.name, onClick: () => go({ view: views.TIERS, tier: null, category: null, subcategory: null, file: null, topicLabel: null }) });
   if (nav.tier) breadcrumbs.push({ label: nav.tier.name, onClick: () => go({ view: views.CATEGORIES, category: null, subcategory: null, file: null }) });
@@ -33,7 +73,7 @@ export default function App() {
   if (nav.subcategory) breadcrumbs.push({ label: nav.subcategory.name });
   if (nav.file) breadcrumbs.push({ label: nav.file.name });
 
-  const selectWorkload   = (wl)     => {
+  const selectWorkload = (wl) => {
     setAgentActivating(true);
     setTimeout(() => {
       setAgentActivating(false);
@@ -49,6 +89,8 @@ export default function App() {
   const selectFile       = (file)   => go({ view: views.FILE_GRAPH, file });
   const openTopicGraph   = (label)  => go({ view: views.TOPIC_GRAPH, topicLabel: label });
   const goBack           = ()       => {
+    if (nav.view === views.POSTURE_AGENT) return goHome();
+    if (nav.view === views.PLACEHOLDER) return goHome();
     if (nav.view === views.FILE_GRAPH) return go({ view: views.SUBCATEGORIES, file: null });
     if (nav.view === views.TOPIC_GRAPH) return go({ view: nav.subcategory ? views.SUBCATEGORIES : views.CATEGORIES, topicLabel: null });
     if (nav.view === views.SUBCATEGORIES && nav.subcategory) return go({ view: views.SUBCATEGORIES, subcategory: null });
@@ -57,6 +99,11 @@ export default function App() {
     if (nav.view === views.TIERS) return goHome();
     if (nav.view === views.WORKLOADS) return goHome();
   };
+
+  /* Determine which nav IDs relate to current view for highlighting */
+  const effectiveNavId = [views.HOME, views.TIERS, views.CATEGORIES, views.SUBCATEGORIES, views.FILE_GRAPH, views.TOPIC_GRAPH, views.WORKLOADS].includes(nav.view)
+    ? 'overview'
+    : activeNavId;
 
   let content;
   switch (nav.view) {
@@ -67,8 +114,6 @@ export default function App() {
       content = <WorkloadOverview onSelectWorkload={selectWorkload} />;
       break;
     case views.TIERS:
-      content = <TierView onSelectTier={selectTier} />;
-      break;
       content = <TierView onSelectTier={selectTier} />;
       break;
     case views.CATEGORIES:
@@ -90,6 +135,18 @@ export default function App() {
     case views.TOPIC_GRAPH:
       content = <TopicGraph categoryId={nav.category?.id} label={nav.topicLabel || nav.category?.name} />;
       break;
+    case views.POSTURE_AGENT:
+      content = <PostureAgentView />;
+      break;
+    case views.PLACEHOLDER:
+      content = (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', flexDirection: 'column', gap: 12 }}>
+          <span style={{ fontSize: 40 }}>🚧</span>
+          <h2 style={{ fontSize: 20, fontWeight: 700, color: '#e0e0ff', margin: 0 }}>{placeholderLabel}</h2>
+          <p style={{ fontSize: 14, color: '#6a6a80' }}>Coming soon — this section is under development.</p>
+        </div>
+      );
+      break;
   }
 
   return (
@@ -108,7 +165,7 @@ export default function App() {
             <h1 onClick={goHome} style={{ cursor: 'pointer' }}>Microsoft Purview</h1>
             <span className="header-badge">Data Security Posture Management</span>
           </div>
-          {breadcrumbs.length > 0 && nav.view !== views.HOME && (
+          {breadcrumbs.length > 0 && (
             <nav className="breadcrumbs">
               <span className="bc-sep">|</span>
               {breadcrumbs.map((bc, i) => (
@@ -129,8 +186,57 @@ export default function App() {
         </div>
       </header>
 
-      <div className={`view-wrapper ${transitioning ? 'v-out' : 'v-in'}`}>
-        {content}
+      {/* Body: Left Nav + Content */}
+      <div className="app-body">
+        {/* Left Navigation */}
+        <aside className="left-nav">
+          <div className="left-nav-title">DSPM</div>
+          <ul className="left-nav-list">
+            {navItems.map(item => (
+              <li key={item.id}>
+                {item.expandable ? (
+                  <>
+                    <button
+                      className="left-nav-item left-nav-expandable"
+                      onClick={() => toggleSection(item.id)}
+                    >
+                      <span className="left-nav-icon">{item.icon}</span>
+                      <span className="left-nav-label">{item.label}</span>
+                      <span className={`left-nav-chevron ${expandedSections[item.id] ? 'left-nav-chevron-open' : ''}`}>▸</span>
+                    </button>
+                    {expandedSections[item.id] && item.children && (
+                      <ul className="left-nav-children">
+                        {item.children.map(child => (
+                          <li key={child.id}>
+                            <button
+                              className={`left-nav-item left-nav-child ${effectiveNavId === child.id ? 'left-nav-active' : ''}`}
+                              onClick={() => handleNavClick(child)}
+                            >
+                              <span className="left-nav-label">{child.label}</span>
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </>
+                ) : (
+                  <button
+                    className={`left-nav-item ${effectiveNavId === item.id ? 'left-nav-active' : ''}`}
+                    onClick={() => handleNavClick(item)}
+                  >
+                    <span className="left-nav-icon">{item.icon}</span>
+                    <span className="left-nav-label">{item.label}</span>
+                  </button>
+                )}
+              </li>
+            ))}
+          </ul>
+        </aside>
+
+        {/* Main Content */}
+        <main className={`main-content ${transitioning ? 'v-out' : 'v-in'}`}>
+          {content}
+        </main>
       </div>
 
       {/* Agent Activation Overlay */}
@@ -191,8 +297,57 @@ export default function App() {
         .bc-home:hover, .bc-link:hover { text-decoration: underline; }
         .bc-item { color: #a0a0b8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-        /* View Transitions */
-        .view-wrapper { flex: 1; min-height: 0; position: relative; z-index: 1; transition: opacity .3s ease, transform .3s ease; }
+        /* Body layout: nav + content */
+        .app-body {
+          display: flex; flex: 1; min-height: 0; position: relative; z-index: 1;
+        }
+
+        /* Left Navigation */
+        .left-nav {
+          width: 220px; flex-shrink: 0; background: rgba(14,14,28,0.85);
+          border-right: 1px solid rgba(255,255,255,0.06);
+          display: flex; flex-direction: column; overflow-y: auto;
+          scrollbar-width: thin; scrollbar-color: #2a2a3a transparent;
+        }
+        .left-nav-title {
+          padding: 16px 18px 10px; font-size: 11px; font-weight: 700;
+          letter-spacing: 1.2px; color: #8b5cf6; text-transform: uppercase;
+        }
+        .left-nav-list {
+          list-style: none; margin: 0; padding: 0;
+        }
+        .left-nav-list li { margin: 0; }
+        .left-nav-item {
+          display: flex; align-items: center; gap: 10px; width: 100%;
+          padding: 9px 18px; border: none; background: none; color: #a0a0b8;
+          font-size: 13px; font-family: inherit; cursor: pointer; text-align: left;
+          transition: background .15s, color .15s; position: relative;
+        }
+        .left-nav-item:hover { background: rgba(255,255,255,0.04); color: #d0d0e8; }
+        .left-nav-active {
+          color: #e0e0ff !important; background: rgba(99,102,241,0.12) !important;
+        }
+        .left-nav-active::before {
+          content: ''; position: absolute; left: 0; top: 6px; bottom: 6px; width: 3px;
+          background: #8b5cf6; border-radius: 0 3px 3px 0;
+        }
+        .left-nav-icon { font-size: 15px; width: 20px; text-align: center; flex-shrink: 0; }
+        .left-nav-label { flex: 1; }
+        .left-nav-chevron {
+          font-size: 10px; color: #5a5a70; transition: transform .2s; flex-shrink: 0;
+        }
+        .left-nav-chevron-open { transform: rotate(90deg); }
+        .left-nav-expandable { font-weight: 500; }
+        .left-nav-children {
+          list-style: none; margin: 0; padding: 0;
+        }
+        .left-nav-child { padding-left: 48px !important; font-size: 12.5px; }
+
+        /* Main Content */
+        .main-content {
+          flex: 1; min-width: 0; min-height: 0; overflow: hidden;
+          transition: opacity .3s ease, transform .3s ease;
+        }
         .v-out { opacity: 0; transform: scale(.98); }
         .v-in { opacity: 1; transform: scale(1); }
 
