@@ -45,7 +45,7 @@ export default function App() {
 
   const goHome = () => {
     setActiveNavId('overview');
-    go({ view: views.HOME, workload: null, tier: null, category: null, subcategory: null, site: null, file: null, topicLabel: null });
+    go({ view: views.HOME, workload: null, tier: null, category: null, subcategory: null, file: null, topicLabel: null });
   };
 
   const handleNavClick = (item) => {
@@ -306,7 +306,7 @@ export default function App() {
 
         /* Body layout: nav + content */
         .app-body {
-          display: flex; flex: 1; min-height: 0;
+          display: flex; flex: 1; min-height: 0; position: relative; z-index: 1;
         }
 
         /* Left Navigation */
@@ -352,7 +352,7 @@ export default function App() {
 
         /* Main Content */
         .main-content {
-          flex: 1; min-width: 0; min-height: 0; position: relative;
+          flex: 1; min-width: 0; min-height: 0; overflow: hidden;
           transition: opacity .3s ease, transform .3s ease;
         }
         .v-out { opacity: 0; transform: scale(.98); }
