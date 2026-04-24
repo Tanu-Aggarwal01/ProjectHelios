@@ -4,7 +4,7 @@ import * as d3 from 'd3';
 import { getSubcategories, getCategorySiteBreakdown, formatNumber, readinessColor, lastScannedLabel, getSubcategoryNarrative, getSiteNarrative } from '../data/mockData';
 import SiteExplorer from './SiteExplorer';
 
-function SubcategoryDeepDive({ subcategory, category, onClose }) {
+function SubcategoryDeepDive({ subcategory, category, onClose, onSelectSite }) {
   const [selectedSite, setSelectedSite] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
   const [mitigationModal, setMitigationModal] = useState(null);
@@ -214,6 +214,11 @@ function SubcategoryDeepDive({ subcategory, category, onClose }) {
                 <button className="dd-explore-site-btn" onClick={() => setExplorerSite(selectedSite)}>
                   📂 Explore Full Site — Folders &amp; Files
                 </button>
+                {onSelectSite && (
+                  <button className="dd-analysis-site-btn" onClick={() => onSelectSite(selectedSite)}>
+                    📊 Full Site Analysis — Posture, Risks &amp; Remediation
+                  </button>
+                )}
               </>
             )}
           </div>
@@ -351,6 +356,8 @@ function SubcategoryDeepDive({ subcategory, category, onClose }) {
       .dd-mit-cancel{padding:8px 16px;border-radius:8px;font-size:12px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:#a0a0b8;cursor:pointer;font-family:inherit;transition:all .15s}.dd-mit-cancel:hover{background:rgba(255,255,255,0.1)}
       .dd-explore-site-btn{width:100%;padding:10px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s;font-family:inherit;margin-bottom:12px;background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.2);color:#86efac;text-align:center}
       .dd-explore-site-btn:hover{background:rgba(34,197,94,0.15);border-color:rgba(34,197,94,0.4);color:white}
+      .dd-analysis-site-btn{width:100%;padding:10px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s;font-family:inherit;background:rgba(139,92,246,0.08);border:1px solid rgba(139,92,246,0.2);color:#c4b5fd;text-align:center;margin-top:6px}
+      .dd-analysis-site-btn:hover{background:rgba(139,92,246,0.15);border-color:rgba(139,92,246,0.4);color:white}
       .last-scanned { font-size: 10px; color: #4a4a60; display: inline-flex; align-items: center; gap: 4px; }
       .dd-collapse-header{display:flex;align-items:center;gap:6px;cursor:pointer;padding:6px 0;transition:all .15s}
       .dd-collapse-header:hover{opacity:0.8}
@@ -365,7 +372,7 @@ function SubcategoryDeepDive({ subcategory, category, onClose }) {
   );
 }
 
-export default function SubcategoryView({ tier, category, selectedSub, onSelectSubcategory }) {
+export default function SubcategoryView({ tier, category, selectedSub, onSelectSubcategory, onSelectSite }) {
   const svgRef = useRef(null);
   const containerRef = useRef(null);
   const [tooltip, setTooltip] = useState(null);
@@ -621,7 +628,7 @@ export default function SubcategoryView({ tier, category, selectedSub, onSelectS
       </div>
 
       {deepDiveSub && (
-        <SubcategoryDeepDive subcategory={deepDiveSub} category={category} onClose={() => setDeepDiveSub(null)} />
+        <SubcategoryDeepDive subcategory={deepDiveSub} category={category} onClose={() => setDeepDiveSub(null)} onSelectSite={onSelectSite} />
       )}
 
       {quickAction && (

@@ -4,7 +4,7 @@ import * as d3 from 'd3';
 import { getCategoriesForTier, getCategorySiteBreakdown, formatNumber, readinessColor, lastScannedLabel, getCategoryNarrative, getSiteNarrative } from '../data/mockData';
 import SiteExplorer from './SiteExplorer';
 
-function CategoryDeepDive({ category, onClose }) {
+function CategoryDeepDive({ category, onClose, onSelectSite }) {
   const [selectedSite, setSelectedSite] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
   const [mitigationModal, setMitigationModal] = useState(null);
@@ -256,6 +256,11 @@ function CategoryDeepDive({ category, onClose }) {
                 <button className="dd-explore-site-btn" onClick={() => setExplorerSite(selectedSite)}>
                   📂 Explore Full Site — Folders &amp; Files
                 </button>
+                {onSelectSite && (
+                  <button className="dd-analysis-site-btn" onClick={() => onSelectSite(selectedSite)}>
+                    📊 Full Site Analysis — Posture, Risks &amp; Remediation
+                  </button>
+                )}
               </>
             )}
           </div>
@@ -810,6 +815,12 @@ function CategoryDeepDive({ category, onClose }) {
         color:#86efac; text-align:center;
       }
       .dd-explore-site-btn:hover { background:rgba(34,197,94,0.15); border-color:rgba(34,197,94,0.4); color:white; }
+      .dd-analysis-site-btn {
+        width:100%; padding:10px 14px; border-radius:8px; font-size:12px; font-weight:600;
+        background:rgba(139,92,246,0.08); border:1px solid rgba(139,92,246,0.2);
+        color:#c4b5fd; cursor:pointer; font-family:inherit; transition:all .2s; margin-top:6px;
+      }
+      .dd-analysis-site-btn:hover { background:rgba(139,92,246,0.15); border-color:rgba(139,92,246,0.4); color:white; }
       .last-scanned { font-size: 10px; color: #4a4a60; display: inline-flex; align-items: center; gap: 4px; }
       .dd-collapse-header{display:flex;align-items:center;gap:6px;cursor:pointer;padding:6px 0;transition:all .15s}
       .dd-collapse-header:hover{opacity:0.8}
@@ -829,7 +840,7 @@ function fileIcon(type) {
   return icons[type] || '📄';
 }
 
-export default function CategoryView({ tier, onSelectCategory, onOpenTopicGraph }) {
+export default function CategoryView({ tier, onSelectCategory, onOpenTopicGraph, onSelectSite }) {
   const svgRef = useRef(null);
   const containerRef = useRef(null);
   const [tooltip, setTooltip] = useState(null);
@@ -1151,7 +1162,7 @@ export default function CategoryView({ tier, onSelectCategory, onOpenTopicGraph 
       </div>
 
       {deepDiveCat && (
-        <CategoryDeepDive category={deepDiveCat} onClose={() => setDeepDiveCat(null)} />
+        <CategoryDeepDive category={deepDiveCat} onClose={() => setDeepDiveCat(null)} onSelectSite={onSelectSite} />
       )}
 
       {quickAction && (
