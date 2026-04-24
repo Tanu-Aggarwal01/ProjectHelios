@@ -306,7 +306,7 @@ export default function App() {
 
         /* Body layout: nav + content */
         .app-body {
-          display: flex; flex: 1; min-height: 0; position: relative; z-index: 1;
+          display: flex; flex: 1; min-height: 0;
         }
 
         /* Left Navigation */
