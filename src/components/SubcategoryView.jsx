@@ -80,7 +80,7 @@ function SubcategoryDeepDive({ subcategory, category, onClose }) {
                       <td style={{textAlign:'right'}}>{formatNumber(site.monthlyReads)}</td>
                       <td style={{textAlign:'right'}}>{formatNumber(site.monthlyWrites)}</td>
                       <td style={{textAlign:'right'}}><span className="dd-users-badge">👥 {site.totalUsers}</span></td>
-                      <td style={{textAlign:'center'}}><button className="dd-sample-btn">View ›</button>{onSelectSite && <button className="dd-analysis-btn" onClick={(e) => { e.stopPropagation(); onSelectSite(site); }}>Analysis →</button>}</td>
+                      <td style={{textAlign:'center'}}><button className="dd-sample-btn">View ›</button></td>
                     </tr>
                   ))}
                 </tbody>
@@ -307,7 +307,6 @@ function SubcategoryDeepDive({ subcategory, category, onClose }) {
       .dd-pct-val{font-size:11px;font-weight:700;min-width:30px;text-align:right}
       .dd-users-badge{font-size:11px;color:#a0a0b8}
       .dd-sample-btn{background:rgba(99,102,241,0.1);border:1px solid rgba(99,102,241,0.2);color:#a5b4fc;padding:3px 10px;border-radius:5px;font-size:10px;cursor:pointer;font-family:inherit;transition:all .15s}.dd-sample-btn:hover{background:rgba(99,102,241,0.2)}
-      .dd-analysis-btn{background:rgba(139,92,246,0.1);border:1px solid rgba(139,92,246,0.25);color:#c4b5fd;padding:3px 10px;border-radius:5px;font-size:10px;cursor:pointer;font-family:inherit;transition:all .15s;margin-left:4px}.dd-analysis-btn:hover{background:rgba(139,92,246,0.2);color:white}
       .dd-detail{width:380px;flex-shrink:0;overflow-y:auto;padding:16px 20px}
       .dd-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;text-align:center}.dd-empty-icon{font-size:40px;margin-bottom:12px;opacity:0.3}.dd-empty p{font-size:12px;color:#4a4a60;max-width:200px;line-height:1.5}
       .dd-detail-head{margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,0.06)}.dd-detail-head h3{font-size:14px;font-weight:700;margin:0 0 4px}
@@ -366,7 +365,7 @@ function SubcategoryDeepDive({ subcategory, category, onClose }) {
   );
 }
 
-export default function SubcategoryView({ tier, category, selectedSub, onSelectSubcategory, onSelectSite }) {
+export default function SubcategoryView({ tier, category, selectedSub, onSelectSubcategory }) {
   const svgRef = useRef(null);
   const containerRef = useRef(null);
   const [tooltip, setTooltip] = useState(null);

@@ -92,8 +92,7 @@ function CategoryDeepDive({ category, onClose }) {
                         <span className="dd-users-badge">👥 {site.totalUsers}</span>
                       </td>
                       <td style={{textAlign:'center'}}>
-                        <button className="dd-sample-btn" onClick={(e) => { e.stopPropagation(); }}>View ›</button>
-                        {onSelectSite && <button className="dd-analysis-btn" onClick={(e) => { e.stopPropagation(); onSelectSite(site); }}>Analysis →</button>}
+                        <button className="dd-sample-btn">View ›</button>
                       </td>
                     </tr>
                   ))}
@@ -623,12 +622,6 @@ function CategoryDeepDive({ category, onClose }) {
         cursor:pointer; font-family:inherit; transition:all .15s;
       }
       .dd-sample-btn:hover { background:rgba(99,102,241,0.2); }
-      .dd-analysis-btn {
-        background:rgba(139,92,246,0.1); border:1px solid rgba(139,92,246,0.25);
-        color:#c4b5fd; padding:3px 10px; border-radius:5px; font-size:10px;
-        cursor:pointer; font-family:inherit; transition:all .15s; margin-left:4px;
-      }
-      .dd-analysis-btn:hover { background:rgba(139,92,246,0.2); color:white; }
 
       /* Right: detail panel */
       .dd-detail { width:380px; flex-shrink:0; overflow-y:auto; padding:16px 20px; }
@@ -836,7 +829,7 @@ function fileIcon(type) {
   return icons[type] || '📄';
 }
 
-export default function CategoryView({ tier, onSelectCategory, onOpenTopicGraph, onSelectSite }) {
+export default function CategoryView({ tier, onSelectCategory, onOpenTopicGraph }) {
   const svgRef = useRef(null);
   const containerRef = useRef(null);
   const [tooltip, setTooltip] = useState(null);

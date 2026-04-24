@@ -7,9 +7,8 @@ import SubcategoryView from './components/SubcategoryView';
 import FileGraph from './components/FileGraph';
 import TopicGraph from './components/TopicGraph';
 import PostureAgentView from './components/PostureAgentView';
-import SiteAnalysisView from './components/SiteAnalysisView';
 
-const views = { HOME: 'home', WORKLOADS: 'workloads', TIERS: 'tiers', CATEGORIES: 'categories', SUBCATEGORIES: 'subcategories', SITE_ANALYSIS: 'site-analysis', FILE_GRAPH: 'file-graph', TOPIC_GRAPH: 'topic-graph', POSTURE_AGENT: 'posture-agent', PLACEHOLDER: 'placeholder' };
+const views = { HOME: 'home', WORKLOADS: 'workloads', TIERS: 'tiers', CATEGORIES: 'categories', SUBCATEGORIES: 'subcategories', FILE_GRAPH: 'file-graph', TOPIC_GRAPH: 'topic-graph', POSTURE_AGENT: 'posture-agent', PLACEHOLDER: 'placeholder' };
 
 /* Left-nav items */
 const navItems = [
@@ -28,7 +27,7 @@ const navItems = [
 ];
 
 export default function App() {
-  const [nav, setNav] = useState({ view: views.HOME, workload: null, tier: null, category: null, subcategory: null, site: null, file: null, topicLabel: null });
+  const [nav, setNav] = useState({ view: views.HOME, workload: null, tier: null, category: null, subcategory: null, file: null, topicLabel: null });
   const [transitioning, setTransitioning] = useState(false);
   const [agentActivating, setAgentActivating] = useState(false);
   const [expandedSections, setExpandedSections] = useState({ posture: true });
@@ -88,13 +87,11 @@ export default function App() {
   const selectCategory   = (cat)    => go({ view: views.SUBCATEGORIES, category: cat, subcategory: null, file: null });
   const selectSubcategory = (sub)   => go({ view: views.SUBCATEGORIES, subcategory: sub });
   const selectFile       = (file)   => go({ view: views.FILE_GRAPH, file });
-  const selectSite       = (site)   => go({ view: views.SITE_ANALYSIS, site });
   const openTopicGraph   = (label)  => go({ view: views.TOPIC_GRAPH, topicLabel: label });
   const goBack           = ()       => {
     if (nav.view === views.POSTURE_AGENT) return goHome();
     if (nav.view === views.PLACEHOLDER) return goHome();
     if (nav.view === views.FILE_GRAPH) return go({ view: views.SUBCATEGORIES, file: null });
-    if (nav.view === views.SITE_ANALYSIS) return go({ view: views.SUBCATEGORIES, site: null });
     if (nav.view === views.TOPIC_GRAPH) return go({ view: nav.subcategory ? views.SUBCATEGORIES : views.CATEGORIES, topicLabel: null });
     if (nav.view === views.SUBCATEGORIES && nav.subcategory) return go({ view: views.SUBCATEGORIES, subcategory: null });
     if (nav.view === views.SUBCATEGORIES) return go({ view: views.CATEGORIES, category: null, subcategory: null });
@@ -104,7 +101,7 @@ export default function App() {
   };
 
   /* Determine which nav IDs relate to current view for highlighting */
-  const effectiveNavId = [views.HOME, views.TIERS, views.CATEGORIES, views.SUBCATEGORIES, views.SITE_ANALYSIS, views.FILE_GRAPH, views.TOPIC_GRAPH, views.WORKLOADS].includes(nav.view)
+  const effectiveNavId = [views.HOME, views.TIERS, views.CATEGORIES, views.SUBCATEGORIES, views.FILE_GRAPH, views.TOPIC_GRAPH, views.WORKLOADS].includes(nav.view)
     ? 'overview'
     : activeNavId;
 
@@ -120,7 +117,7 @@ export default function App() {
       content = <TierView onSelectTier={selectTier} />;
       break;
     case views.CATEGORIES:
-      content = <CategoryView tier={nav.tier} onSelectCategory={selectCategory} onOpenTopicGraph={openTopicGraph} onSelectSite={selectSite} />;
+      content = <CategoryView tier={nav.tier} onSelectCategory={selectCategory} onOpenTopicGraph={openTopicGraph} />;
       break;
     case views.SUBCATEGORIES:
       content = (
@@ -129,15 +126,11 @@ export default function App() {
           category={nav.category}
           selectedSub={nav.subcategory}
           onSelectSubcategory={selectSubcategory}
-          onSelectSite={selectSite}
         />
       );
       break;
     case views.FILE_GRAPH:
       content = <FileGraph file={nav.file} />;
-      break;
-    case views.SITE_ANALYSIS:
-      content = <SiteAnalysisView site={nav.site} category={nav.category} onBack={goBack} />;
       break;
     case views.TOPIC_GRAPH:
       content = <TopicGraph categoryId={nav.category?.id} label={nav.topicLabel || nav.category?.name} />;
