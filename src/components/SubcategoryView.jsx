@@ -387,10 +387,15 @@ export default function SubcategoryView({ tier, category, selectedSub, onSelectS
   // Draw treemap
   useEffect(() => {
     if (!containerRef.current) return;
-    const W = containerRef.current.clientWidth;
-    const H = containerRef.current.clientHeight;
-    const svg = d3.select(svgRef.current).attr('width', W).attr('height', H);
-    svg.selectAll('*').remove();
+    let cancelled = false;
+
+    const render = () => {
+      if (cancelled || !containerRef.current) return;
+      const W = containerRef.current.clientWidth;
+      const H = containerRef.current.clientHeight;
+      if (W === 0 || H === 0) return;
+      const svg = d3.select(svgRef.current).attr('width', W).attr('height', H);
+      svg.selectAll('*').remove();
 
     const defs = svg.append('defs');
     subs.forEach(s => {
@@ -501,6 +506,12 @@ export default function SubcategoryView({ tier, category, selectedSub, onSelectS
       .on('click', (_, d) => handleCellClick(d.data));
 
     return () => svg.selectAll('*').remove();
+    };
+
+    render();
+    const t1 = setTimeout(render, 350);
+    const t2 = setTimeout(render, 700);
+    return () => { cancelled = true; clearTimeout(t1); clearTimeout(t2); };
   }, [subs, category.color, handleCellClick]);
 
   return (
