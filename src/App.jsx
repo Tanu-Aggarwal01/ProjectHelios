@@ -352,7 +352,7 @@ export default function App() {
 
         /* Main Content */
         .main-content {
-          flex: 1; min-width: 0; min-height: 0; overflow: hidden;
+          flex: 1; min-width: 0; min-height: 0; height: 100%; overflow: hidden;
           transition: opacity .3s ease, transform .3s ease;
         }
         .v-out { opacity: 0; transform: scale(.98); }

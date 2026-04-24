@@ -866,13 +866,16 @@ export default function CategoryView({ tier, onSelectCategory, onOpenTopicGraph,
   }, [onSelectCategory]);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
     if (!containerRef.current) return;
-    const W = containerRef.current.clientWidth;
-    const H = containerRef.current.clientHeight;
-    if (W === 0 || H === 0) return;
-    const svg = d3.select(svgRef.current).attr('width', W).attr('height', H);
-    svg.selectAll('*').remove();
+    let cancelled = false;
+
+    const render = () => {
+      if (cancelled || !containerRef.current) return;
+      const W = containerRef.current.clientWidth;
+      const H = containerRef.current.clientHeight;
+      if (W === 0 || H === 0) return;
+      const svg = d3.select(svgRef.current).attr('width', W).attr('height', H);
+      svg.selectAll('*').remove();
 
     const defs = svg.append('defs');
     cats.forEach(c => {
@@ -1007,8 +1010,13 @@ export default function CategoryView({ tier, onSelectCategory, onOpenTopicGraph,
       .on('click', (_, d) => handleCellClick(d.data));
 
     return () => svg.selectAll('*').remove();
-    }, 100);
-    return () => clearTimeout(timer);
+    };
+
+    // Try immediately, then retry after transition settles
+    render();
+    const t1 = setTimeout(render, 350);
+    const t2 = setTimeout(render, 700);
+    return () => { cancelled = true; clearTimeout(t1); clearTimeout(t2); };
   }, [cats, handleCellClick]);
 
   return (
