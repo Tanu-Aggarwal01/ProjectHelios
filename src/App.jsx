@@ -45,7 +45,7 @@ export default function App() {
 
   const goHome = () => {
     setActiveNavId('overview');
-    go({ view: views.HOME, workload: null, tier: null, category: null, subcategory: null, file: null, topicLabel: null });
+    go({ view: views.HOME, workload: null, tier: null, category: null, subcategory: null, site: null, file: null, topicLabel: null });
   };
 
   const handleNavClick = (item) => {

@@ -866,9 +866,11 @@ export default function CategoryView({ tier, onSelectCategory, onOpenTopicGraph,
   }, [onSelectCategory]);
 
   useEffect(() => {
+    const timer = setTimeout(() => {
     if (!containerRef.current) return;
     const W = containerRef.current.clientWidth;
     const H = containerRef.current.clientHeight;
+    if (W === 0 || H === 0) return;
     const svg = d3.select(svgRef.current).attr('width', W).attr('height', H);
     svg.selectAll('*').remove();
 
@@ -1005,6 +1007,8 @@ export default function CategoryView({ tier, onSelectCategory, onOpenTopicGraph,
       .on('click', (_, d) => handleCellClick(d.data));
 
     return () => svg.selectAll('*').remove();
+    }, 100);
+    return () => clearTimeout(timer);
   }, [cats, handleCellClick]);
 
   return (
